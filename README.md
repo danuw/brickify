@@ -16,6 +16,8 @@ To get started, follow these steps:
 1. Go to [https://danuw.github.io/brickify/](https://danuw.github.io/brickify/)
 2. Upload an image, crop it, resize it, and view the output along with the color inventory.
 
+![Example of the interface trying to "blockify" bob marley for a nice 48x48 portrait on the wall](docs/img/ui-sample.png)
+
 ## Notes
 
 - LEGO dot-type bricks are typically sold in packs of 1000, either in specific colors or mixed. Keep this in mind when selecting your palette.
