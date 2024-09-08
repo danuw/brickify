@@ -2,41 +2,43 @@
 <html lang="en" >
 <head>
   <meta charset="UTF-8">
-  <title>CodePen - Brickify</title>
+  <title>Brickify</title>
   <link rel="stylesheet" href="./style.css">
 
 </head>
 <body>
 <!-- partial:index.partial.html -->
-<div class="container">
-        <h1>Image Resizer and Cropper</h1>
-        <input type="file" id="imageUpload" accept="image/*">
-        <canvas id="imageCanvas"></canvas>
-        <canvas id="pixelCanvas"></canvas>
-        <div id="imageInfo"></div>
-        <div class="crop-controls">
-            <label for="cropX">Crop X:</label>
-            <input type="number" id="cropX" min="0">
-            <label for="cropY">Crop Y:</label>
-            <input type="number" id="cropY" min="0">
-            <label for="cropWidth">Crop Width:</label>
-            <input type="number" id="cropWidth" min="1">
-            <label for="cropHeight">Crop Height:</label>
-            <input type="number" id="cropHeight" min="1">
-            <button id="cropButton">Crop</button>
-        </div>
-        <div class="resize-controls">
-            <label for="width">Width:</label>
-            <input type="number" id="width" min="1">
-            <label for="height">Height:</label>
-            <input type="number" id="height" min="1">
-            <button id="resizeButton">Resize</button>
-        </div>
-        <button id="pixelViewButton">Show Pixel View</button>
-        <button id="inventoryButton">Show Color Inventory</button>
-        <div id="colorInventory"></div>
+
+  <div class="container">
+    <h1>Blockify</h1>
+    <h2>Image Resizer and Cropper to create Lego brick frame templates</h2>
+    <input type="file" id="imageUpload" accept="image/*">
+    <canvas id="imageCanvas"></canvas>
+    <canvas id="pixelCanvas"></canvas>
+    <div id="imageInfo"></div>
+    <div class="crop-controls">
+        <label for="cropX">Crop X:</label>
+        <input type="number" id="cropX" min="0">
+        <label for="cropY">Crop Y:</label>
+        <input type="number" id="cropY" min="0">
+        <label for="cropWidth">Crop Width:</label>
+        <input type="number" id="cropWidth" min="1">
+        <label for="cropHeight">Crop Height:</label>
+        <input type="number" id="cropHeight" min="1">
+        <button id="cropButton">Crop</button>
     </div>
-    <script src="script.js"></script>
+    <div class="resize-controls">
+        <label for="width">Width:</label>
+        <input type="number" id="width" min="1">
+        <label for="height">Height:</label>
+        <input type="number" id="height" min="1">
+        <button id="resizeButton">Resize</button>
+    </div>
+    <button id="pixelViewButton">Show Pixel View</button>
+    <button id="inventoryButton">Show Color Inventory</button>
+    <div id="colorInventory"></div>
+  </div>
+  <script src="script.js"></script>
 <!-- partial -->
   <script  src="./script.js"></script>
 

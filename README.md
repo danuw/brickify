@@ -13,10 +13,8 @@ Brickify is a tool to create custom LEGO frames using dot-type bricks from your 
 
 To get started, follow these steps:
 
-1. Clone the repository.
-2. Start a server (e.g., using the [Live Server extension](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer)).
-3. Browse to the `dist` folder and open `index.html`.
-4. Upload an image, crop it, resize it, and view the output along with the color inventory.
+1. Go to [https://danuw.github.io/brickify/](https://danuw.github.io/brickify/)
+2. Upload an image, crop it, resize it, and view the output along with the color inventory.
 
 ## Notes
 
