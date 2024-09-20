@@ -3,6 +3,11 @@ document.getElementById('cropButton').addEventListener('click', cropImage);
 document.getElementById('resizeButton').addEventListener('click', resizeImage);
 document.getElementById('pixelViewButton').addEventListener('click', showPixelView);
 document.getElementById('inventoryButton').addEventListener('click', showColorInventory);
+document.getElementById('pixelGridButton').addEventListener('click', function() {
+    document.getElementById('pixelGrid').style.display = 'block';
+    showPixelView();
+});
+
 
 let originalImage = new Image();
 let canvas = document.getElementById('imageCanvas');
@@ -129,34 +134,60 @@ function resizeImage() {
         }
     }
 }
-
 function showPixelView() {
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const data = imageData.data;
     const dotSize = 5;
+    const subgridSize = 16;
 
-    pixelCanvas.width = canvas.width * dotSize;
-    pixelCanvas.height = canvas.height * dotSize;
+    // Clear the existing pixel grid
+    const pixelGrid = document.getElementById('pixelGrid');
+    pixelGrid.innerHTML = '';
 
-    for (let y = 0; y < canvas.height; y++) {
-        for (let x = 0; x < canvas.width; x++) {
-            const index = (y * canvas.width + x) * 4;
-            let r = data[index];
-            let g = data[index + 1];
-            let b = data[index + 2];
-            const a = data[index + 3] / 255;
+    // Set up the main grid dimensions
+    pixelGrid.style.display = 'grid';
+    pixelGrid.style.gridTemplateColumns = `repeat(${Math.ceil(canvas.width / subgridSize)}, auto)`;
+    pixelGrid.style.gridTemplateRows = `repeat(${Math.ceil(canvas.height / subgridSize)}, auto)`;
 
-            // Apply simple color correction
-            [r, g, b] = colorCorrection(r, g, b);
+    for (let subgridY = 0; subgridY < canvas.height; subgridY += subgridSize) {
+        for (let subgridX = 0; subgridX < canvas.width; subgridX += subgridSize) {
+            const subgrid = document.createElement('div');
+            subgrid.style.display = 'grid';
+            subgrid.style.gridTemplateColumns = `repeat(${subgridSize}, ${dotSize}px)`;
+            subgrid.style.gridTemplateRows = `repeat(${subgridSize}, ${dotSize}px)`;
 
-            //const [closestR, closestG, closestB] = findClosestColor(r, g, b);
-            const { name, color: [closestR, closestG, closestB] } = findClosestColor(r, g, b);
-            const color = `rgba(${closestR},${closestG},${closestB},${a})`;
+            for (let y = 0; y < subgridSize; y++) {
+                for (let x = 0; x < subgridSize; x++) {
+                    const pixelX = subgridX + x;
+                    const pixelY = subgridY + y;
 
-            pixelCtx.fillStyle = `rgba(${closestR},${closestG},${closestB},${a})`;
-            pixelCtx.beginPath();
-            pixelCtx.arc(x * dotSize + dotSize / 2, y * dotSize + dotSize / 2, dotSize / 2, 0, Math.PI * 2);
-            pixelCtx.fill();
+                    if (pixelX < canvas.width && pixelY < canvas.height) {
+                        const index = (pixelY * canvas.width + pixelX) * 4;
+                        let r = data[index];
+                        let g = data[index + 1];
+                        let b = data[index + 2];
+                        const a = data[index + 3] / 255;
+
+                        // Apply simple color correction
+                        [r, g, b] = colorCorrection(r, g, b);
+
+                        const { name, color: [closestR, closestG, closestB] } = findClosestColor(r, g, b);
+                        const color = `rgba(${closestR},${closestG},${closestB},${a})`;
+
+                        // Create a div for each pixel
+                        const pixelDiv = document.createElement('div');
+                        pixelDiv.style.width = `${dotSize}px`;
+                        pixelDiv.style.height = `${dotSize}px`;
+                        pixelDiv.style.backgroundColor = color;
+
+                        // Append the pixel div to the subgrid
+                        subgrid.appendChild(pixelDiv);
+                    }
+                }
+            }
+
+            // Append the subgrid to the main grid
+            pixelGrid.appendChild(subgrid);
         }
     }
 }
@@ -235,4 +266,91 @@ function showColorInventory() {
         <ul>${colorList}</ul>
         <p>Total different colors: ${Object.keys(colorCount).length}</p>
     `;
+}
+function createPixelGrid(imageData) {
+    const gridContainer = document.getElementById('pixelGrid');
+    gridContainer.innerHTML = ''; // Clear any existing grid
+
+    const data = imageData.data;
+    const width = imageData.width;
+    const height = imageData.height;
+
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+            const index = (y * width + x) * 4;
+            const r = data[index];
+            const g = data[index + 1];
+            const b = data[index + 2];
+            const a = data[index + 3] / 255;
+
+            const pixelDiv = document.createElement('div');
+            pixelDiv.className = 'pixel';
+            pixelDiv.style.backgroundColor = `rgba(${r},${g},${b},${a})`;
+            gridContainer.appendChild(pixelDiv);
+        }
+    }
+}
+
+function createPixelGrid(imageData) {
+    const gridContainer = document.getElementById('pixelGrid');
+    gridContainer.innerHTML = ''; // Clear any existing grid
+
+    const data = imageData.data;
+    const width = imageData.width;
+    const height = imageData.height;
+
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+            const index = (y * width + x) * 4;
+            const r = data[index];
+            const g = data[index + 1];
+            const b = data[index + 2];
+            const a = data[index + 3] / 255;
+
+            const pixelDiv = document.createElement('div');
+            pixelDiv.className = 'pixel';
+            pixelDiv.style.backgroundColor = `rgba(${r},${g},${b},${a})`;
+            gridContainer.appendChild(pixelDiv);
+        }
+    }
+}
+
+function separateInto16x16Groups(imageData) {
+    const width = imageData.width;
+    const height = imageData.height;
+    const groupSize = 16;
+
+    const subgridContainer = document.createElement('div');
+    subgridContainer.className = 'subgrid-container';
+    document.body.appendChild(subgridContainer);
+
+    for (let y = 0; y < height; y += groupSize) {
+        for (let x = 0; x < width; x += groupSize) {
+            const subgrid = document.createElement('div');
+            subgrid.className = 'subgrid';
+
+            for (let subY = 0; subY < groupSize; subY++) {
+                for (let subX = 0; subX < groupSize; subX++) {
+                    const index = ((y + subY) * width + (x + subX)) * 4;
+                    const r = imageData.data[index];
+                    const g = imageData.data[index + 1];
+                    const b = imageData.data[index + 2];
+                    const a = imageData.data[index + 3] / 255;
+
+                    const pixelDiv = document.createElement('div');
+                    pixelDiv.className = 'pixel';
+                    pixelDiv.style.backgroundColor = `rgba(${r},${g},${b},${a})`;
+                    subgrid.appendChild(pixelDiv);
+                }
+            }
+
+            subgridContainer.appendChild(subgrid);
+        }
+    }
+}
+
+function showPixelGridAndGroups() {
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    createPixelGrid(imageData);
+    separateInto16x16Groups(imageData);
 }
