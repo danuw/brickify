@@ -4,10 +4,14 @@ document.getElementById('resizeButton').addEventListener('click', resizeImage);
 document.getElementById('pixelViewButton').addEventListener('click', showPixelView);
 document.getElementById('inventoryButton').addEventListener('click', showColorInventory);
 document.getElementById('pixelGridButton').addEventListener('click', function() {
-    document.getElementById('pixelGrid').style.display = 'block';
+    document.getElementById('pixelGrid').style.display = 'inline-grid';
     showPixelView();
 });
 
+document.getElementById('numberedGridButton').addEventListener('click', function() {
+    document.getElementById('pixelGrid').style.display = 'inline-grid';
+    showNumberedGridView();
+});
 
 let originalImage = new Image();
 let canvas = document.getElementById('imageCanvas');
@@ -145,7 +149,7 @@ function showPixelView() {
     pixelGrid.innerHTML = '';
 
     // Set up the main grid dimensions
-    pixelGrid.style.display = 'grid';
+    pixelGrid.style.display = 'inline-grid';
     pixelGrid.style.gridTemplateColumns = `repeat(${Math.ceil(canvas.width / subgridSize)}, auto)`;
     pixelGrid.style.gridTemplateRows = `repeat(${Math.ceil(canvas.height / subgridSize)}, auto)`;
 
@@ -179,6 +183,71 @@ function showPixelView() {
                         pixelDiv.style.width = `${dotSize}px`;
                         pixelDiv.style.height = `${dotSize}px`;
                         pixelDiv.style.backgroundColor = color;
+
+                        // Append the pixel div to the subgrid
+                        subgrid.appendChild(pixelDiv);
+                    }
+                }
+            }
+
+            // Append the subgrid to the main grid
+            pixelGrid.appendChild(subgrid);
+        }
+    }
+}
+
+function showNumberedGridView() {
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+    const dotSize = 5;
+    const subgridSize = 16;
+    const margin = 5; // Margin between subgrids
+
+    // Clear the existing pixel grid
+    const pixelGrid = document.getElementById('pixelGrid');
+    pixelGrid.innerHTML = '';
+
+    // Set up the main grid dimensions
+    //pixelGrid.style.display = 'grid';
+    pixelGrid.style.gridTemplateColumns = `repeat(${Math.ceil(canvas.width / subgridSize)}, auto)`;
+    pixelGrid.style.gridTemplateRows = `repeat(${Math.ceil(canvas.height / subgridSize)}, auto)`;
+    pixelGrid.style.gap = `${margin}px`; // Add margin between subgrids
+
+    for (let subgridY = 0; subgridY < canvas.height; subgridY += subgridSize) {
+        for (let subgridX = 0; subgridX < canvas.width; subgridX += subgridSize) {
+            const subgrid = document.createElement('div');
+            //subgrid.style.display = 'grid';
+            subgrid.style.gridTemplateColumns = `repeat(${subgridSize}, ${2*dotSize}px)`;
+            subgrid.style.gridTemplateRows = `repeat(${subgridSize}, ${2*dotSize}px)`;
+
+            for (let y = 0; y < subgridSize; y++) {
+                for (let x = 0; x < subgridSize; x++) {
+                    const pixelX = subgridX + x;
+                    const pixelY = subgridY + y;
+
+                    if (pixelX < canvas.width && pixelY < canvas.height) {
+                        const index = (pixelY * canvas.width + pixelX) * 4;
+                        let r = data[index];
+                        let g = data[index + 1];
+                        let b = data[index + 2];
+                        const a = data[index + 3] / 255;
+
+                        // Apply simple color correction
+                        [r, g, b] = colorCorrection(r, g, b);
+
+                        const { name, color: [closestR, closestG, closestB] } = findClosestColor(r, g, b);
+                        const colorIndex = palette.findIndex(p => p.color[0] === closestR && p.color[1] === closestG && p.color[2] === closestB);
+
+                        // Create a div for each pixel
+                        const pixelDiv = document.createElement('div');
+                        //pixelDiv.style.width = `${dotSize}px`;
+                        //pixelDiv.style.height = `${dotSize}px`;
+                        pixelDiv.style.display = 'flex';
+                        pixelDiv.style.alignItems = 'center';
+                        pixelDiv.style.justifyContent = 'center';
+                        pixelDiv.style.fontSize = '10px'; // Adjust font size as needed
+                        pixelDiv.style.color = 'black'; // Adjust text color as needed
+                        pixelDiv.textContent = colorIndex;
 
                         // Append the pixel div to the subgrid
                         subgrid.appendChild(pixelDiv);
@@ -251,13 +320,13 @@ function showColorInventory() {
     const colorInventoryDiv = document.getElementById('colorInventory');
     colorInventoryDiv.innerHTML = '';
 
-    const colorList = Object.keys(colorCount).map(name => {
+    const colorList = Object.keys(colorCount).map((name, index) => {
         const colorObj = palette.find(c => c.name === name);
         const colorValue = colorObj ? `rgb(${colorObj.color.join(',')})` : 'rgb(0, 0, 0)'; // Default to black if not found
         return `
             <li style="display: flex; align-items: center; margin-bottom: 5px;">
                 <div style="width: 20px; height: 20px; background-color: ${colorValue}; margin-right: 10px; border: 1px solid #ccc;"></div>
-                ${name}: ${colorCount[name]} pixels
+                ${index}-${name}: ${colorCount[name]} pixels
             </li>`;
     }).join('');
 

@@ -27,6 +27,7 @@ To get started, follow these steps:
 We welcome contributions! Here are some planned improvements:
 
 - [x] Publish to GitHub Pages for easy access
+- [.] Numbers instead of colours on the grid as clear build instructions
 - [ ] Selectable palettes from predefined sets
 - [ ] More palette options
 - [ ] Custom palettes
