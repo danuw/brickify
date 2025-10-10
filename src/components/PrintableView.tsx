@@ -201,24 +201,26 @@ export const PrintableView: React.FC = () => {
                       return (
                         <td
                           key={x}
-                          className="border border-gray-400 text-center font-bold"
+                          className="border border-gray-400 text-center font-bold p-0"
                           style={{
-                            width: `${cellSize}px`,
-                            height: `${cellSize}px`,
-                            minWidth: `${cellSize}px`,
-                            minHeight: `${cellSize}px`,
-                            maxWidth: `${cellSize}px`,
-                            maxHeight: `${cellSize}px`,
                             backgroundColor: bgColor,
                             color: textColor,
                             padding: 0,
-                            lineHeight: `${cellSize}px`,
-                            fontSize: `${fontSize}px`,
-                            boxSizing: 'border-box',
-                            aspectRatio: '1 / 1',
                           }}
                         >
-                          {colorNum}
+                          <div
+                            style={{
+                              width: `${cellSize}px`,
+                              height: `${cellSize}px`,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: `${fontSize}px`,
+                              fontWeight: 'bold',
+                            }}
+                          >
+                            {colorNum}
+                          </div>
                         </td>
                       );
                     })}
@@ -297,11 +299,16 @@ export const PrintableView: React.FC = () => {
             max-width: 100% !important;
           }
 
-          /* Ensure square cells maintain aspect ratio in print */
+          /* Ensure cells are compact in print */
           table td {
-            font-weight: bold !important;
-            box-sizing: border-box !important;
-            aspect-ratio: 1 / 1 !important;
+            padding: 0 !important;
+          }
+
+          /* Scale cell divs for print */
+          table td div {
+            width: 20px !important;
+            height: 20px !important;
+            font-size: 10px !important;
           }
         }
       `}</style>
