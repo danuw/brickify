@@ -48,6 +48,9 @@ export const VisualImageEditor: React.FC = () => {
     resizeImage({ width: outputWidth, height: outputHeight });
   }, [outputWidth, outputHeight, resizeImage]);
 
+  // Calculate aspect ratio from output dimensions
+  const aspectRatio = outputWidth / outputHeight;
+
   if (!image) return null;
 
   return (
@@ -63,15 +66,20 @@ export const VisualImageEditor: React.FC = () => {
 
       {showCropTool && originalImage && (
         <div className="space-y-4">
-          <p className="text-sm text-gray-600">
-            Cropping from original image ({originalImage.width}×{originalImage.height}px)
-          </p>
+          <div className="space-y-1">
+            <p className="text-sm text-gray-600">
+              Cropping from original image ({originalImage.width}×{originalImage.height}px)
+            </p>
+            <p className="text-sm font-medium text-blue-600">
+              Aspect ratio locked to {outputWidth}×{outputHeight} ({aspectRatio === 1 ? 'square' : aspectRatio > 1 ? 'landscape' : 'portrait'})
+            </p>
+          </div>
           <div className="relative h-96 bg-gray-900 rounded-lg overflow-hidden">
             <Cropper
               image={originalImage.src}
               crop={crop}
               zoom={zoom}
-              aspect={undefined}
+              aspect={aspectRatio}
               onCropChange={setCrop}
               onCropComplete={onCropComplete}
               onZoomChange={setZoom}
