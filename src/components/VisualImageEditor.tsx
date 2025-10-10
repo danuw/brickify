@@ -22,8 +22,8 @@ export const VisualImageEditor: React.FC = () => {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
-  const [outputWidth, setOutputWidth] = useState(32);
-  const [outputHeight, setOutputHeight] = useState(32);
+  const [outputWidth, setOutputWidth] = useState(48);
+  const [outputHeight, setOutputHeight] = useState(48);
   const [showCropTool, setShowCropTool] = useState(false);
 
   const onCropComplete = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
