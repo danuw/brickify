@@ -1,7 +1,8 @@
 import { ImageUploader } from './components/ImageUploader';
-import { ImageEditor } from './components/ImageEditor';
+import { VisualImageEditor } from './components/VisualImageEditor';
 import { ColorPalette } from './components/ColorPalette';
 import { Canvas } from './components/Canvas';
+import { History } from './components/History';
 import { Button } from './components/ui/button';
 import { useBrickifyStore } from './store/store';
 
@@ -17,11 +18,13 @@ function App() {
         <p className="text-gray-600 mb-8">Image Resizer and Cropper to create Lego brick frame templates</p>
 
         <div className="space-y-8">
+          <History />
+
           <ImageUploader />
 
           {image && (
             <>
-              <ImageEditor />
+              <VisualImageEditor />
 
               <div className="flex gap-4">
                 <Button

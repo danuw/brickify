@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useCallback } from 'react';
 import { colorCorrection } from '@/lib/utils';
 import { useBrickifyStore } from '@/store/store';
 import { Color } from '@/store/paletteSlice';
+import { Button } from './ui/button';
 
 export const Canvas: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -10,6 +11,7 @@ export const Canvas: React.FC = () => {
   const image = useBrickifyStore((state) => state.image);
   const showPixelView = useBrickifyStore((state) => state.showPixelView);
   const palette = useBrickifyStore((state) => state.palette);
+  const addToHistory = useBrickifyStore((state) => state.addToHistory);
 
   const findClosestColor = useCallback((r: number, g: number, b: number): Color => {
     let minDistance = Infinity;
@@ -87,17 +89,36 @@ export const Canvas: React.FC = () => {
     }
   }, [image, showPixelView, renderPixelView]);
 
+  const handleSaveToHistory = useCallback(() => {
+    if (image) {
+      addToHistory(image, palette);
+    }
+  }, [image, palette, addToHistory]);
+
   return (
     <div className="space-y-4">
-      <canvas
-        ref={canvasRef}
-        className="border border-gray-200 rounded-lg"
-      />
-      {showPixelView && (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Original Image</h3>
         <canvas
-          ref={pixelCanvasRef}
-          className="border border-gray-200 rounded-lg"
+          ref={canvasRef}
+          className="border border-gray-200 rounded-lg max-w-full h-auto"
+          style={{ imageRendering: 'pixelated' }}
         />
+      </div>
+      {showPixelView && (
+        <div>
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-lg font-semibold">LEGO Brick Preview</h3>
+            <Button onClick={handleSaveToHistory} size="sm">
+              Save to History
+            </Button>
+          </div>
+          <canvas
+            ref={pixelCanvasRef}
+            className="border border-gray-200 rounded-lg max-w-full h-auto"
+            style={{ imageRendering: 'pixelated' }}
+          />
+        </div>
       )}
     </div>
   );
