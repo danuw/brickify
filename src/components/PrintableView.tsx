@@ -49,7 +49,7 @@ export const PrintableView: React.FC = () => {
 
   // Calculate cell size based on grid dimensions to fit on page
   const getCellSize = useCallback(() => {
-    if (!image) return { size: 32, fontSize: 14 };
+    if (!image) return { size: 40, fontSize: 16 };
 
     // Max dimensions for screen (accounting for padding and margins)
     const maxWidth = 1200;  // Increased for better width usage
@@ -58,10 +58,10 @@ export const PrintableView: React.FC = () => {
     // Calculate cell size that fits the grid on screen
     const cellWidth = Math.floor(maxWidth / image.width);
     const cellHeight = Math.floor(maxHeight / image.height);
-    const cellSize = Math.min(cellWidth, cellHeight, 64); // Increased max to 64px per cell
+    const cellSize = Math.max(30, Math.min(cellWidth, cellHeight, 64)); // Min 30px, max 64px per cell
 
-    // Font size should be proportional but readable (min 10px, max 20px)
-    const fontSize = Math.max(10, Math.min(20, cellSize * 0.5));
+    // Font size should be proportional but readable (min 14px, max 24px)
+    const fontSize = Math.max(14, Math.min(24, cellSize * 0.6));
 
     return { size: cellSize, fontSize };
   }, [image]);
@@ -216,7 +216,10 @@ export const PrintableView: React.FC = () => {
                               alignItems: 'center',
                               justifyContent: 'center',
                               fontSize: `${fontSize}px`,
-                              fontWeight: 'bold',
+                              fontWeight: '900',
+                              textShadow: textColor === 'white'
+                                ? '0 0 3px rgba(0,0,0,0.8), 0 0 5px rgba(0,0,0,0.5)'
+                                : '0 0 3px rgba(255,255,255,0.8), 0 0 5px rgba(255,255,255,0.5)',
                             }}
                           >
                             {colorNum}
