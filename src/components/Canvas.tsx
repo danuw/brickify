@@ -3,6 +3,7 @@ import { colorCorrection } from '@/lib/utils';
 import { useBrickifyStore } from '@/store/store';
 import { Color } from '@/store/paletteSlice';
 import { Button } from './ui/button';
+import { Select } from './ui/select';
 
 export const Canvas: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -12,6 +13,10 @@ export const Canvas: React.FC = () => {
   const showPixelView = useBrickifyStore((state) => state.showPixelView);
   const palette = useBrickifyStore((state) => state.palette);
   const addToHistory = useBrickifyStore((state) => state.addToHistory);
+  const backgroundColor = useBrickifyStore((state) => state.backgroundColor);
+  const pixelShape = useBrickifyStore((state) => state.pixelShape);
+  const setBackgroundColor = useBrickifyStore((state) => state.setBackgroundColor);
+  const setPixelShape = useBrickifyStore((state) => state.setPixelShape);
 
   const findClosestColor = useCallback((r: number, g: number, b: number): Color => {
     let minDistance = Infinity;
@@ -34,6 +39,16 @@ export const Canvas: React.FC = () => {
     return closestColor;
   }, [palette]);
 
+  const getBackgroundColorValue = useCallback((color: string): string => {
+    const colors: Record<string, string> = {
+      white: '#FFFFFF',
+      black: '#000000',
+      peach: '#FFDAB9',
+      grey: '#808080',
+    };
+    return colors[color] || '#FFFFFF';
+  }, []);
+
   const renderPixelView = useCallback(() => {
     if (!canvasRef.current || !pixelCanvasRef.current) return;
 
@@ -43,10 +58,15 @@ export const Canvas: React.FC = () => {
 
     const imageData = ctx.getImageData(0, 0, canvasRef.current.width, canvasRef.current.height);
     const data = imageData.data;
-    const dotSize = 5;
+    const dotSize = 8; // Increased to accommodate gap
+    const blockSize = 7; // Actual block size (leaving 1px gap)
 
     pixelCanvasRef.current.width = canvasRef.current.width * dotSize;
     pixelCanvasRef.current.height = canvasRef.current.height * dotSize;
+
+    // Fill background
+    pixelCtx.fillStyle = getBackgroundColorValue(backgroundColor);
+    pixelCtx.fillRect(0, 0, pixelCanvasRef.current.width, pixelCanvasRef.current.height);
 
     for (let y = 0; y < canvasRef.current.height; y++) {
       for (let x = 0; x < canvasRef.current.width; x++) {
@@ -61,18 +81,30 @@ export const Canvas: React.FC = () => {
         const { color: [closestR, closestG, closestB] } = findClosestColor(r, g, b);
 
         pixelCtx.fillStyle = `rgba(${closestR},${closestG},${closestB},${a})`;
-        pixelCtx.beginPath();
-        pixelCtx.arc(
-          x * dotSize + dotSize / 2,
-          y * dotSize + dotSize / 2,
-          dotSize / 2,
-          0,
-          Math.PI * 2
-        );
-        pixelCtx.fill();
+
+        if (pixelShape === 'round') {
+          // Draw round pixel
+          pixelCtx.beginPath();
+          pixelCtx.arc(
+            x * dotSize + dotSize / 2,
+            y * dotSize + dotSize / 2,
+            blockSize / 2,
+            0,
+            Math.PI * 2
+          );
+          pixelCtx.fill();
+        } else {
+          // Draw square pixel with gap
+          pixelCtx.fillRect(
+            x * dotSize + 0.5,
+            y * dotSize + 0.5,
+            blockSize,
+            blockSize
+          );
+        }
       }
     }
-  }, [findClosestColor]);
+  }, [findClosestColor, backgroundColor, pixelShape, getBackgroundColorValue]);
 
   useEffect(() => {
     if (!image || !canvasRef.current) return;
@@ -113,6 +145,35 @@ export const Canvas: React.FC = () => {
               Save to History
             </Button>
           </div>
+
+          <div className="flex gap-4 mb-3">
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium">Background:</label>
+              <Select
+                value={backgroundColor}
+                onChange={(e) => setBackgroundColor(e.target.value as any)}
+                className="w-32"
+              >
+                <option value="white">White</option>
+                <option value="black">Black</option>
+                <option value="peach">Peach</option>
+                <option value="grey">Grey</option>
+              </Select>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium">Shape:</label>
+              <Select
+                value={pixelShape}
+                onChange={(e) => setPixelShape(e.target.value as any)}
+                className="w-32"
+              >
+                <option value="round">Round</option>
+                <option value="square">Square</option>
+              </Select>
+            </div>
+          </div>
+
           <canvas
             ref={pixelCanvasRef}
             className="border border-gray-200 rounded-lg max-w-full h-auto"

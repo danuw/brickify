@@ -38,21 +38,30 @@ export const PrintableView: React.FC = () => {
     return closestColor;
   }, [palette]);
 
+  // Calculate luminance to determine if text should be white or black
+  const getTextColor = useCallback((rgb: number[]): string => {
+    const [r, g, b] = rgb;
+    // Calculate relative luminance
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    // Use white text on dark backgrounds, black on light
+    return luminance > 0.5 ? 'black' : 'white';
+  }, []);
+
   // Calculate cell size based on grid dimensions to fit on page
   const getCellSize = useCallback(() => {
     if (!image) return { size: 32, fontSize: 14 };
 
     // Max dimensions for screen (accounting for padding and margins)
-    const maxWidth = 900;
-    const maxHeight = 700;
+    const maxWidth = 1200;  // Increased for better width usage
+    const maxHeight = 800;  // Increased for better space usage
 
     // Calculate cell size that fits the grid on screen
     const cellWidth = Math.floor(maxWidth / image.width);
     const cellHeight = Math.floor(maxHeight / image.height);
-    const cellSize = Math.min(cellWidth, cellHeight, 48); // Max 48px per cell
+    const cellSize = Math.min(cellWidth, cellHeight, 64); // Increased max to 64px per cell
 
-    // Font size should be proportional but readable (min 10px, max 18px)
-    const fontSize = Math.max(10, Math.min(18, cellSize * 0.5));
+    // Font size should be proportional but readable (min 10px, max 20px)
+    const fontSize = Math.max(10, Math.min(20, cellSize * 0.5));
 
     return { size: cellSize, fontSize };
   }, [image]);
@@ -187,7 +196,7 @@ export const PrintableView: React.FC = () => {
                         : `rgb(${colorMapping.color.color.join(',')})`;
                       const textColor = showNumbersOnly || !colorMapping
                         ? 'black'
-                        : (colorNum <= 3 ? 'white' : 'black');
+                        : getTextColor(colorMapping.color.color);
 
                       return (
                         <td
@@ -205,6 +214,8 @@ export const PrintableView: React.FC = () => {
                             padding: 0,
                             lineHeight: `${cellSize}px`,
                             fontSize: `${fontSize}px`,
+                            boxSizing: 'border-box',
+                            aspectRatio: '1 / 1',
                           }}
                         >
                           {colorNum}
@@ -289,6 +300,8 @@ export const PrintableView: React.FC = () => {
           /* Ensure square cells maintain aspect ratio in print */
           table td {
             font-weight: bold !important;
+            box-sizing: border-box !important;
+            aspect-ratio: 1 / 1 !important;
           }
         }
       `}</style>
