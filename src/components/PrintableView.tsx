@@ -13,6 +13,7 @@ interface ColorMapping {
 export const PrintableView: React.FC = () => {
   const image = useBrickifyStore((state) => state.image);
   const palette = useBrickifyStore((state) => state.palette);
+  const pixelShape = useBrickifyStore((state) => state.pixelShape);
   const [colorGrid, setColorGrid] = useState<number[][]>([]);
   const [colorMappings, setColorMappings] = useState<ColorMapping[]>([]);
   const [showNumbersOnly, setShowNumbersOnly] = useState(false);
@@ -190,52 +191,55 @@ export const PrintableView: React.FC = () => {
             </p>
           </div>
           <div className="flex justify-center overflow-x-auto">
-            <table className="border-collapse" style={{ lineHeight: 0, margin: '0 auto' }}>
-              <tbody>
-                {colorGrid.map((row, y) => (
-                  <tr key={y}>
-                    {row.map((colorNum, x) => {
-                      const colorMapping = colorMappings.find(m => m.number === colorNum);
-                      const bgColor = showNumbersOnly || !colorMapping
-                        ? 'white'
-                        : `rgb(${colorMapping.color.color.join(',')})`;
-                      const textColor = showNumbersOnly || !colorMapping
-                        ? 'black'
-                        : getTextColor(colorMapping.color.color);
+            <div
+              className="building-grid"
+              style={{
+                display: 'grid',
+                gridTemplateColumns: `repeat(${image.width}, ${cellSize}px)`,
+                gap: '2px',
+                margin: '0 auto',
+                padding: '4px',
+                backgroundColor: '#e5e7eb',
+                borderRadius: '8px',
+              }}
+            >
+              {colorGrid.flatMap((row, y) =>
+                row.map((colorNum, x) => {
+                  const colorMapping = colorMappings.find(m => m.number === colorNum);
+                  const bgColor = showNumbersOnly || !colorMapping
+                    ? 'white'
+                    : `rgb(${colorMapping.color.color.join(',')})`;
+                  const textColor = showNumbersOnly || !colorMapping
+                    ? 'black'
+                    : getTextColor(colorMapping.color.color);
 
-                      return (
-                        <td
-                          key={x}
-                          className="border border-gray-400 text-center font-bold p-0"
-                          style={{
-                            backgroundColor: bgColor,
-                            color: textColor,
-                            padding: 0,
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: `${cellSize}px`,
-                              height: `${cellSize}px`,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: `${fontSize}px`,
-                              fontWeight: '900',
-                              textShadow: textColor === 'white'
-                                ? '0 0 3px rgba(0,0,0,0.8), 0 0 5px rgba(0,0,0,0.5)'
-                                : '0 0 3px rgba(255,255,255,0.8), 0 0 5px rgba(255,255,255,0.5)',
-                            }}
-                          >
-                            {colorNum}
-                          </div>
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                  return (
+                    <div
+                      key={`${y}-${x}`}
+                      className="grid-cell"
+                      style={{
+                        width: `${cellSize}px`,
+                        height: `${cellSize}px`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: bgColor,
+                        color: textColor,
+                        fontSize: `${fontSize}px`,
+                        fontWeight: '900',
+                        textShadow: textColor === 'white'
+                          ? '0 0 3px rgba(0,0,0,0.8), 0 0 5px rgba(0,0,0,0.5)'
+                          : '0 0 3px rgba(255,255,255,0.8), 0 0 5px rgba(255,255,255,0.5)',
+                        borderRadius: pixelShape === 'round' ? '50%' : '4px',
+                        border: '1px solid rgba(0,0,0,0.1)',
+                      }}
+                    >
+                      {colorNum}
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </div>
         </div>
 
@@ -301,22 +305,18 @@ export const PrintableView: React.FC = () => {
             font-size: 1rem;
           }
 
-          /* Scale table to fit page width */
-          table {
-            line-height: 0 !important;
+          /* Scale grid to fit page width */
+          .building-grid {
             max-width: 100% !important;
+            gap: 1px !important;
+            padding: 2px !important;
           }
 
-          /* Ensure cells are compact in print */
-          table td {
-            padding: 0 !important;
-          }
-
-          /* Scale cell divs for print */
-          table td div {
-            width: 20px !important;
-            height: 20px !important;
-            font-size: 10px !important;
+          /* Scale grid cells for print */
+          .grid-cell {
+            width: 18px !important;
+            height: 18px !important;
+            font-size: 9px !important;
           }
         }
       `}</style>
