@@ -1,33 +1,17 @@
-import React, { useRef, useEffect } from 'react';
-import { Color } from './ColorPalette';
+import React, { useRef, useEffect, useCallback } from 'react';
 import { colorCorrection } from '@/lib/utils';
+import { useBrickifyStore } from '@/store/store';
+import { Color } from '@/store/paletteSlice';
 
-interface CanvasProps {
-  image: HTMLImageElement | null;
-  showPixelView: boolean;
-  palette: Color[];
-}
-
-export const Canvas: React.FC<CanvasProps> = ({ image, showPixelView, palette }) => {
+export const Canvas: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const pixelCanvasRef = useRef<HTMLCanvasElement>(null);
 
-  useEffect(() => {
-    if (!image || !canvasRef.current) return;
+  const image = useBrickifyStore((state) => state.image);
+  const showPixelView = useBrickifyStore((state) => state.showPixelView);
+  const palette = useBrickifyStore((state) => state.palette);
 
-    const ctx = canvasRef.current.getContext('2d');
-    if (!ctx) return;
-
-    canvasRef.current.width = image.width;
-    canvasRef.current.height = image.height;
-    ctx.drawImage(image, 0, 0);
-
-    if (showPixelView && pixelCanvasRef.current) {
-      renderPixelView();
-    }
-  }, [image, showPixelView]);
-
-  const findClosestColor = (r: number, g: number, b: number) => {
+  const findClosestColor = useCallback((r: number, g: number, b: number): Color => {
     let minDistance = Infinity;
     let closestColor = palette[0];
 
@@ -46,9 +30,9 @@ export const Canvas: React.FC<CanvasProps> = ({ image, showPixelView, palette })
     }
 
     return closestColor;
-  };
+  }, [palette]);
 
-  const renderPixelView = () => {
+  const renderPixelView = useCallback(() => {
     if (!canvasRef.current || !pixelCanvasRef.current) return;
 
     const ctx = canvasRef.current.getContext('2d');
@@ -65,7 +49,7 @@ export const Canvas: React.FC<CanvasProps> = ({ image, showPixelView, palette })
     for (let y = 0; y < canvasRef.current.height; y++) {
       for (let x = 0; x < canvasRef.current.width; x++) {
         const index = (y * canvasRef.current.width + x) * 4;
-        let [r, g, b] = colorCorrection(
+        const [r, g, b] = colorCorrection(
           data[index],
           data[index + 1],
           data[index + 2]
@@ -86,7 +70,22 @@ export const Canvas: React.FC<CanvasProps> = ({ image, showPixelView, palette })
         pixelCtx.fill();
       }
     }
-  };
+  }, [findClosestColor]);
+
+  useEffect(() => {
+    if (!image || !canvasRef.current) return;
+
+    const ctx = canvasRef.current.getContext('2d');
+    if (!ctx) return;
+
+    canvasRef.current.width = image.width;
+    canvasRef.current.height = image.height;
+    ctx.drawImage(image, 0, 0);
+
+    if (showPixelView && pixelCanvasRef.current) {
+      renderPixelView();
+    }
+  }, [image, showPixelView, renderPixelView]);
 
   return (
     <div className="space-y-4">

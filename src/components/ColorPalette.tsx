@@ -1,19 +1,12 @@
 import React from 'react';
+import { useBrickifyStore } from '@/store/store';
 
-export interface Color {
-  name: string;
-  color: [number, number, number];
-}
+export const ColorPalette: React.FC = () => {
+  const palette = useBrickifyStore((state) => state.palette);
 
-interface ColorPaletteProps {
-  colors: Color[];
-  onPaletteChange: (palette: Color[]) => void;
-}
-
-export const ColorPalette: React.FC<ColorPaletteProps> = ({ colors, onPaletteChange }) => {
   return (
     <div className="grid grid-cols-4 gap-2 p-4">
-      {colors.map((color, index) => (
+      {palette.map((color, index) => (
         <div
           key={index}
           className="flex flex-col items-center"

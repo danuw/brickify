@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build:*)",
+      "Bash(npm run lint)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nRefactor to use Zustand for state management\n\n- Install Zustand state management library\n- Create modular store structure with slices:\n  - imageSlice: handles image state and crop/resize operations\n  - paletteSlice: manages color palette state\n  - uiSlice: controls UI state (pixel view toggle)\n- Refactor all components to use Zustand store instead of props\n- Remove prop drilling from App.tsx\n- Add index.html for Vite project structure\n- Configure ESLint with proper rules for React + TypeScript\n- Fix linting issues (useCallback for hooks, const declarations)\n\nBenefits:\n- Cleaner component code with no prop drilling\n- Better separation of concerns (state logic separate from UI)\n- Type-safe state management\n- Easier to extend with new features\n- Smaller bundle size compared to other state libraries\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
