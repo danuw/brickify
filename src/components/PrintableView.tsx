@@ -13,7 +13,10 @@ interface ColorMapping {
 export const PrintableView: React.FC = () => {
   const image = useBrickifyStore((state) => state.image);
   const palette = useBrickifyStore((state) => state.palette);
-  const pixelShape = useBrickifyStore((state) => state.pixelShape);
+  const gridBackgroundColor = useBrickifyStore((state) => state.gridBackgroundColor);
+  const gridPixelShape = useBrickifyStore((state) => state.gridPixelShape);
+  const setGridBackgroundColor = useBrickifyStore((state) => state.setGridBackgroundColor);
+  const setGridPixelShape = useBrickifyStore((state) => state.setGridPixelShape);
   const [colorGrid, setColorGrid] = useState<number[][]>([]);
   const [colorMappings, setColorMappings] = useState<ColorMapping[]>([]);
   const [showNumbersOnly, setShowNumbersOnly] = useState(false);
@@ -46,6 +49,18 @@ export const PrintableView: React.FC = () => {
     const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
     // Use white text on dark backgrounds, black on light
     return luminance > 0.5 ? 'black' : 'white';
+  }, []);
+
+  // Get grid background color value
+  const getGridBackgroundColor = useCallback((color: string): string => {
+    const colors: Record<string, string> = {
+      light: '#e5e7eb',
+      dark: '#374151',
+      blue: '#3b82f6',
+      green: '#22c55e',
+      red: '#ef4444',
+    };
+    return colors[color] || '#e5e7eb';
   }, []);
 
   // Calculate cell size based on grid dimensions to fit on page
@@ -134,18 +149,49 @@ export const PrintableView: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center print:hidden">
-        <h3 className="text-lg font-semibold">Build Instructions</h3>
-        <div className="flex gap-2">
-          <Button
-            onClick={() => setShowNumbersOnly(!showNumbersOnly)}
-            variant="outline"
-          >
-            {showNumbersOnly ? 'Show Colors' : 'Numbers Only'}
-          </Button>
-          <Button onClick={handlePrint}>
-            Print Instructions
-          </Button>
+      <div className="space-y-3 print:hidden">
+        <div className="flex justify-between items-center">
+          <h3 className="text-lg font-semibold">Build Instructions</h3>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setShowNumbersOnly(!showNumbersOnly)}
+              variant="outline"
+            >
+              {showNumbersOnly ? 'Show Colors' : 'Numbers Only'}
+            </Button>
+            <Button onClick={handlePrint}>
+              Print Instructions
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex gap-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium">Grid Background:</label>
+            <select
+              value={gridBackgroundColor}
+              onChange={(e) => setGridBackgroundColor(e.target.value as any)}
+              className="px-3 py-1 border border-gray-300 rounded text-sm"
+            >
+              <option value="light">Light Gray</option>
+              <option value="dark">Dark Gray</option>
+              <option value="blue">Blue</option>
+              <option value="green">Green</option>
+              <option value="red">Red</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium">Pixel Shape:</label>
+            <select
+              value={gridPixelShape}
+              onChange={(e) => setGridPixelShape(e.target.value as any)}
+              className="px-3 py-1 border border-gray-300 rounded text-sm"
+            >
+              <option value="round">Round (gaps in corners)</option>
+              <option value="square">Square (full coverage)</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -199,7 +245,7 @@ export const PrintableView: React.FC = () => {
                 gap: '2px',
                 margin: '0 auto',
                 padding: '4px',
-                backgroundColor: '#e5e7eb',
+                backgroundColor: getGridBackgroundColor(gridBackgroundColor),
                 borderRadius: '8px',
               }}
             >
@@ -230,7 +276,7 @@ export const PrintableView: React.FC = () => {
                         textShadow: textColor === 'white'
                           ? '0 0 3px rgba(0,0,0,0.8), 0 0 5px rgba(0,0,0,0.5)'
                           : '0 0 3px rgba(255,255,255,0.8), 0 0 5px rgba(255,255,255,0.5)',
-                        borderRadius: pixelShape === 'round' ? '50%' : '4px',
+                        borderRadius: gridPixelShape === 'round' ? '50%' : '0',
                         border: '1px solid rgba(0,0,0,0.1)',
                       }}
                     >
