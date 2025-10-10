@@ -15,6 +15,7 @@ export const PrintableView: React.FC = () => {
   const palette = useBrickifyStore((state) => state.palette);
   const [colorGrid, setColorGrid] = useState<number[][]>([]);
   const [colorMappings, setColorMappings] = useState<ColorMapping[]>([]);
+  const [showNumbersOnly, setShowNumbersOnly] = useState(false);
 
   const findClosestColor = useCallback((r: number, g: number, b: number): Color => {
     let minDistance = Infinity;
@@ -36,6 +37,25 @@ export const PrintableView: React.FC = () => {
 
     return closestColor;
   }, [palette]);
+
+  // Calculate cell size based on grid dimensions to fit on page
+  const getCellSize = useCallback(() => {
+    if (!image) return { size: 32, fontSize: 14 };
+
+    // Max dimensions for screen (accounting for padding and margins)
+    const maxWidth = 900;
+    const maxHeight = 700;
+
+    // Calculate cell size that fits the grid on screen
+    const cellWidth = Math.floor(maxWidth / image.width);
+    const cellHeight = Math.floor(maxHeight / image.height);
+    const cellSize = Math.min(cellWidth, cellHeight, 48); // Max 48px per cell
+
+    // Font size should be proportional but readable (min 10px, max 18px)
+    const fontSize = Math.max(10, Math.min(18, cellSize * 0.5));
+
+    return { size: cellSize, fontSize };
+  }, [image]);
 
   useEffect(() => {
     if (!image) return;
@@ -100,13 +120,23 @@ export const PrintableView: React.FC = () => {
     return null;
   }
 
+  const { size: cellSize, fontSize } = getCellSize();
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center print:hidden">
         <h3 className="text-lg font-semibold">Build Instructions</h3>
-        <Button onClick={handlePrint}>
-          Print Instructions
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => setShowNumbersOnly(!showNumbersOnly)}
+            variant="outline"
+          >
+            {showNumbersOnly ? 'Show Colors' : 'Numbers Only'}
+          </Button>
+          <Button onClick={handlePrint}>
+            Print Instructions
+          </Button>
+        </div>
       </div>
 
       <div className="printable-content">
@@ -145,25 +175,42 @@ export const PrintableView: React.FC = () => {
         {/* Number Grid */}
         <div className="border border-gray-300 rounded-lg p-4 bg-white overflow-x-auto">
           <h4 className="font-semibold mb-3 text-lg print:text-base">Building Grid</h4>
-          <div className="inline-block">
-            <table className="border-collapse">
+          <div className="flex justify-center">
+            <table className="border-collapse" style={{ lineHeight: 0 }}>
               <tbody>
                 {colorGrid.map((row, y) => (
                   <tr key={y}>
-                    {row.map((colorNum, x) => (
-                      <td
-                        key={x}
-                        className="border border-gray-400 w-8 h-8 text-center text-xs font-semibold print:w-6 print:h-6 print:text-[10px]"
-                        style={{
-                          backgroundColor: colorMappings.find(m => m.number === colorNum)
-                            ? `rgb(${colorMappings.find(m => m.number === colorNum)!.color.color.join(',')})`
-                            : 'white',
-                          color: colorNum <= 3 ? 'white' : 'black',
-                        }}
-                      >
-                        {colorNum}
-                      </td>
-                    ))}
+                    {row.map((colorNum, x) => {
+                      const colorMapping = colorMappings.find(m => m.number === colorNum);
+                      const bgColor = showNumbersOnly || !colorMapping
+                        ? 'white'
+                        : `rgb(${colorMapping.color.color.join(',')})`;
+                      const textColor = showNumbersOnly || !colorMapping
+                        ? 'black'
+                        : (colorNum <= 3 ? 'white' : 'black');
+
+                      return (
+                        <td
+                          key={x}
+                          className="border border-gray-400 text-center font-bold"
+                          style={{
+                            width: `${cellSize}px`,
+                            height: `${cellSize}px`,
+                            minWidth: `${cellSize}px`,
+                            minHeight: `${cellSize}px`,
+                            maxWidth: `${cellSize}px`,
+                            maxHeight: `${cellSize}px`,
+                            backgroundColor: bgColor,
+                            color: textColor,
+                            padding: 0,
+                            lineHeight: `${cellSize}px`,
+                            fontSize: `${fontSize}px`,
+                          }}
+                        >
+                          {colorNum}
+                        </td>
+                      );
+                    })}
                   </tr>
                 ))}
               </tbody>
@@ -203,6 +250,11 @@ export const PrintableView: React.FC = () => {
 
       <style>{`
         @media print {
+          @page {
+            size: A4;
+            margin: 0.5cm;
+          }
+
           body * {
             visibility: hidden;
           }
@@ -224,17 +276,19 @@ export const PrintableView: React.FC = () => {
           .print\\:break-before-page {
             break-before: page;
           }
-          .print\\:w-6 {
-            width: 1.5rem;
-          }
-          .print\\:h-6 {
-            height: 1.5rem;
-          }
-          .print\\:text-\\[10px\\] {
-            font-size: 10px;
-          }
           .print\\:text-base {
             font-size: 1rem;
+          }
+
+          /* Scale table to fit page width */
+          table {
+            line-height: 0 !important;
+            max-width: 100% !important;
+          }
+
+          /* Ensure square cells maintain aspect ratio in print */
+          table td {
+            font-weight: bold !important;
           }
         }
       `}</style>
