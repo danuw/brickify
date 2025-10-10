@@ -13,6 +13,7 @@ export interface ResizeDimensions {
 }
 
 export interface ImageSlice {
+  originalImage: HTMLImageElement | null;
   image: HTMLImageElement | null;
   setImage: (image: HTMLImageElement | null) => void;
   cropImage: (dimensions: CropDimensions) => void;
@@ -20,13 +21,14 @@ export interface ImageSlice {
 }
 
 export const createImageSlice: StateCreator<ImageSlice> = (set, get) => ({
+  originalImage: null,
   image: null,
 
-  setImage: (image) => set({ image }),
+  setImage: (image) => set({ image, originalImage: image }),
 
   cropImage: (dimensions) => {
-    const { image } = get();
-    if (!image) return;
+    const { originalImage } = get();
+    if (!originalImage) return;
 
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
@@ -35,7 +37,7 @@ export const createImageSlice: StateCreator<ImageSlice> = (set, get) => ({
     canvas.width = dimensions.width;
     canvas.height = dimensions.height;
     ctx.drawImage(
-      image,
+      originalImage,
       dimensions.x,
       dimensions.y,
       dimensions.width,

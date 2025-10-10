@@ -14,6 +14,7 @@ interface Area {
 }
 
 export const VisualImageEditor: React.FC = () => {
+  const originalImage = useBrickifyStore((state) => state.originalImage);
   const image = useBrickifyStore((state) => state.image);
   const cropImage = useBrickifyStore((state) => state.cropImage);
   const resizeImage = useBrickifyStore((state) => state.resizeImage);
@@ -60,11 +61,14 @@ export const VisualImageEditor: React.FC = () => {
         </Button>
       </div>
 
-      {showCropTool && (
+      {showCropTool && originalImage && (
         <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            Cropping from original image ({originalImage.width}×{originalImage.height}px)
+          </p>
           <div className="relative h-96 bg-gray-900 rounded-lg overflow-hidden">
             <Cropper
-              image={image.src}
+              image={originalImage.src}
               crop={crop}
               zoom={zoom}
               aspect={undefined}
@@ -97,7 +101,10 @@ export const VisualImageEditor: React.FC = () => {
         <div className="space-y-3">
           <h3 className="text-lg font-semibold">Output Size (16×16 plates)</h3>
           <p className="text-sm text-gray-600">
-            Sizes are based on 16×16 LEGO dot plates
+            Resize current image to LEGO plate dimensions
+          </p>
+          <p className="text-xs text-gray-500">
+            Based on 16×16 LEGO dot plates
           </p>
           <div className="flex gap-2 items-center">
             <label className="text-sm font-medium min-w-[60px]">Width:</label>
