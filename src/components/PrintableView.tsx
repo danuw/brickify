@@ -51,17 +51,17 @@ export const PrintableView: React.FC = () => {
   const getCellSize = useCallback(() => {
     if (!image) return { size: 40, fontSize: 16 };
 
-    // Max dimensions for screen (accounting for padding and margins)
-    const maxWidth = 1200;  // Increased for better width usage
-    const maxHeight = 800;  // Increased for better space usage
+    // Container width accounting for padding (p-4 = 16px * 2) and borders
+    const containerWidth = 1100; // Max width for the grid container
 
-    // Calculate cell size that fits the grid on screen
-    const cellWidth = Math.floor(maxWidth / image.width);
-    const cellHeight = Math.floor(maxHeight / image.height);
-    const cellSize = Math.max(30, Math.min(cellWidth, cellHeight, 64)); // Min 30px, max 64px per cell
+    // Calculate cell size to fit width while maintaining square aspect
+    const cellWidth = Math.floor(containerWidth / image.width);
 
-    // Font size should be proportional but readable (min 14px, max 24px)
-    const fontSize = Math.max(14, Math.min(24, cellSize * 0.6));
+    // Apply minimum and maximum constraints
+    const cellSize = Math.max(20, Math.min(cellWidth, 50)); // Min 20px, max 50px
+
+    // Font size should be proportional but readable (min 12px, max 24px)
+    const fontSize = Math.max(12, Math.min(24, cellSize * 0.6));
 
     return { size: cellSize, fontSize };
   }, [image]);
@@ -182,10 +182,15 @@ export const PrintableView: React.FC = () => {
         </div>
 
         {/* Number Grid */}
-        <div className="border border-gray-300 rounded-lg p-4 bg-white overflow-x-auto">
-          <h4 className="font-semibold mb-3 text-lg print:text-base">Building Grid</h4>
-          <div className="flex justify-center">
-            <table className="border-collapse" style={{ lineHeight: 0 }}>
+        <div className="border border-gray-300 rounded-lg p-4 bg-white">
+          <div className="flex justify-between items-center mb-3">
+            <h4 className="font-semibold text-lg print:text-base">Building Grid</h4>
+            <p className="text-sm text-gray-600">
+              {image.width} x {image.height} cells ({cellSize}px per cell)
+            </p>
+          </div>
+          <div className="flex justify-center overflow-x-auto">
+            <table className="border-collapse" style={{ lineHeight: 0, margin: '0 auto' }}>
               <tbody>
                 {colorGrid.map((row, y) => (
                   <tr key={y}>
