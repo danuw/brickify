@@ -2,6 +2,7 @@ import { ImageUploader } from './components/ImageUploader';
 import { VisualImageEditor } from './components/VisualImageEditor';
 import { ColorPalette } from './components/ColorPalette';
 import { Canvas } from './components/Canvas';
+import { PrintableView } from './components/PrintableView';
 import { History } from './components/History';
 import { Button } from './components/ui/button';
 import { useBrickifyStore } from './store/store';
@@ -38,6 +39,8 @@ function App() {
               <ColorPalette />
 
               <Canvas />
+
+              <PrintableView />
             </>
           )}
         </div>
