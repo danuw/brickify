@@ -3,6 +3,7 @@ import { useBrickifyStore } from '@/store/store';
 import { Color } from '@/store/paletteSlice';
 import { colorCorrection } from '@/lib/utils';
 import { Button } from './ui/button';
+import { LoadingOverlay } from './ui/spinner';
 
 interface ColorMapping {
   color: Color;
@@ -20,6 +21,7 @@ export const PrintableView: React.FC = () => {
   const [colorGrid, setColorGrid] = useState<number[][]>([]);
   const [colorMappings, setColorMappings] = useState<ColorMapping[]>([]);
   const [showNumbersOnly, setShowNumbersOnly] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const findClosestColor = useCallback((r: number, g: number, b: number): Color => {
     let minDistance = Infinity;
@@ -85,64 +87,86 @@ export const PrintableView: React.FC = () => {
   useEffect(() => {
     if (!image) return;
 
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    const generateGrid = async () => {
+      setIsGenerating(true);
 
-    canvas.width = image.width;
-    canvas.height = image.height;
-    ctx.drawImage(image, 0, 0);
+      // Allow UI to update with loading state
+      await new Promise(resolve => setTimeout(resolve, 0));
 
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const data = imageData.data;
-
-    const grid: number[][] = [];
-    const colorCount = new Map<string, number>();
-    const colorToNumber = new Map<string, number>();
-
-    // Create color to number mapping
-    palette.forEach((color, index) => {
-      const key = color.color.join(',');
-      colorToNumber.set(key, index + 1);
-      colorCount.set(key, 0);
-    });
-
-    for (let y = 0; y < canvas.height; y++) {
-      const row: number[] = [];
-      for (let x = 0; x < canvas.width; x++) {
-        const index = (y * canvas.width + x) * 4;
-        const [r, g, b] = colorCorrection(
-          data[index],
-          data[index + 1],
-          data[index + 2]
-        );
-
-        const closestColor = findClosestColor(r, g, b);
-        const colorKey = closestColor.color.join(',');
-        const colorNumber = colorToNumber.get(colorKey) || 1;
-
-        row.push(colorNumber);
-        colorCount.set(colorKey, (colorCount.get(colorKey) || 0) + 1);
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        setIsGenerating(false);
+        return;
       }
-      grid.push(row);
-    }
 
-    const mappings: ColorMapping[] = palette.map((color, index) => ({
-      color,
-      number: index + 1,
-      count: colorCount.get(color.color.join(',')) || 0,
-    })).filter(m => m.count > 0);
+      canvas.width = image.width;
+      canvas.height = image.height;
+      ctx.drawImage(image, 0, 0);
 
-    setColorGrid(grid);
-    setColorMappings(mappings);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+
+      const grid: number[][] = [];
+      const colorCount = new Map<string, number>();
+      const colorToNumber = new Map<string, number>();
+
+      // Create color to number mapping
+      palette.forEach((color, index) => {
+        const key = color.color.join(',');
+        colorToNumber.set(key, index + 1);
+        colorCount.set(key, 0);
+      });
+
+      for (let y = 0; y < canvas.height; y++) {
+        const row: number[] = [];
+        for (let x = 0; x < canvas.width; x++) {
+          const index = (y * canvas.width + x) * 4;
+          const [r, g, b] = colorCorrection(
+            data[index],
+            data[index + 1],
+            data[index + 2]
+          );
+
+          const closestColor = findClosestColor(r, g, b);
+          const colorKey = closestColor.color.join(',');
+          const colorNumber = colorToNumber.get(colorKey) || 1;
+
+          row.push(colorNumber);
+          colorCount.set(colorKey, (colorCount.get(colorKey) || 0) + 1);
+        }
+        grid.push(row);
+      }
+
+      const mappings: ColorMapping[] = palette.map((color, index) => ({
+        color,
+        number: index + 1,
+        count: colorCount.get(color.color.join(',')) || 0,
+      })).filter(m => m.count > 0);
+
+      setColorGrid(grid);
+      setColorMappings(mappings);
+      setIsGenerating(false);
+    };
+
+    generateGrid();
   }, [image, palette, findClosestColor]);
 
   const handlePrint = () => {
     window.print();
   };
 
-  if (!image || colorGrid.length === 0) {
+  if (!image) {
     return null;
+  }
+
+  if (isGenerating || colorGrid.length === 0) {
+    return (
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold">Build Instructions</h3>
+        <LoadingOverlay message="Generating building grid..." />
+      </div>
+    );
   }
 
   const { size: cellSize, fontSize } = getCellSize();

@@ -1,13 +1,15 @@
-import React, { useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { colorCorrection } from '@/lib/utils';
 import { useBrickifyStore } from '@/store/store';
 import { Color } from '@/store/paletteSlice';
 import { Button } from './ui/button';
 import { Select } from './ui/select';
+import { LoadingOverlay } from './ui/spinner';
 
 export const Canvas: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const pixelCanvasRef = useRef<HTMLCanvasElement>(null);
+  const [isRendering, setIsRendering] = useState(false);
 
   const image = useBrickifyStore((state) => state.image);
   const showPixelView = useBrickifyStore((state) => state.showPixelView);
@@ -49,12 +51,17 @@ export const Canvas: React.FC = () => {
     return colors[color] || '#FFFFFF';
   }, []);
 
-  const renderPixelView = useCallback(() => {
+  const renderPixelView = useCallback(async () => {
     if (!canvasRef.current || !pixelCanvasRef.current) return;
 
     const ctx = canvasRef.current.getContext('2d');
     const pixelCtx = pixelCanvasRef.current.getContext('2d');
     if (!ctx || !pixelCtx) return;
+
+    setIsRendering(true);
+
+    // Use setTimeout to allow UI to update with loading state
+    await new Promise(resolve => setTimeout(resolve, 0));
 
     const imageData = ctx.getImageData(0, 0, canvasRef.current.width, canvasRef.current.height);
     const data = imageData.data;
@@ -104,6 +111,8 @@ export const Canvas: React.FC = () => {
         }
       }
     }
+
+    setIsRendering(false);
   }, [findClosestColor, backgroundColor, pixelShape, getBackgroundColorValue]);
 
   useEffect(() => {
@@ -141,7 +150,7 @@ export const Canvas: React.FC = () => {
         <div>
           <div className="flex justify-between items-center mb-2">
             <h3 className="text-lg font-semibold">LEGO Brick Preview</h3>
-            <Button onClick={handleSaveToHistory} size="sm">
+            <Button onClick={handleSaveToHistory} size="sm" disabled={isRendering}>
               Save to History
             </Button>
           </div>
@@ -153,6 +162,7 @@ export const Canvas: React.FC = () => {
                 value={backgroundColor}
                 onChange={(e) => setBackgroundColor(e.target.value as any)}
                 className="w-32"
+                disabled={isRendering}
               >
                 <option value="white">White</option>
                 <option value="black">Black</option>
@@ -167,6 +177,7 @@ export const Canvas: React.FC = () => {
                 value={pixelShape}
                 onChange={(e) => setPixelShape(e.target.value as any)}
                 className="w-32"
+                disabled={isRendering}
               >
                 <option value="round">Round</option>
                 <option value="square">Square</option>
@@ -174,11 +185,15 @@ export const Canvas: React.FC = () => {
             </div>
           </div>
 
-          <canvas
-            ref={pixelCanvasRef}
-            className="border border-gray-200 rounded-lg max-w-full h-auto"
-            style={{ imageRendering: 'pixelated' }}
-          />
+          {isRendering ? (
+            <LoadingOverlay message="Rendering LEGO brick preview..." />
+          ) : (
+            <canvas
+              ref={pixelCanvasRef}
+              className="border border-gray-200 rounded-lg max-w-full h-auto"
+              style={{ imageRendering: 'pixelated' }}
+            />
+          )}
         </div>
       )}
     </div>
