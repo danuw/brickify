@@ -2,7 +2,7 @@ import { StateCreator } from 'zustand';
 
 export type BackgroundColor = 'white' | 'black' | 'peach' | 'grey';
 export type PixelShape = 'square' | 'round';
-export type GridBackgroundColor = 'light' | 'dark' | 'blue' | 'green' | 'red';
+export type GridBackgroundColor = 'white' | 'black' | 'peach' | 'darkgrey';
 
 export interface UISlice {
   showPixelView: boolean;
@@ -22,7 +22,7 @@ export const createUISlice: StateCreator<UISlice> = (set) => ({
   showPixelView: false,
   backgroundColor: 'white',
   pixelShape: 'round',
-  gridBackgroundColor: 'light',
+  gridBackgroundColor: 'white',
   gridPixelShape: 'round',
 
   togglePixelView: () => set((state) => ({ showPixelView: !state.showPixelView })),

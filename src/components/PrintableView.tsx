@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useBrickifyStore } from '@/store/store';
 import { Color } from '@/store/paletteSlice';
 import { colorCorrection } from '@/lib/utils';
@@ -22,6 +22,8 @@ export const PrintableView: React.FC = () => {
   const [colorMappings, setColorMappings] = useState<ColorMapping[]>([]);
   const [showNumbersOnly, setShowNumbersOnly] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const gridContainerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(1100);
 
   const findClosestColor = useCallback((r: number, g: number, b: number): Color => {
     let minDistance = Infinity;
@@ -56,33 +58,45 @@ export const PrintableView: React.FC = () => {
   // Get grid background color value
   const getGridBackgroundColor = useCallback((color: string): string => {
     const colors: Record<string, string> = {
-      light: '#e5e7eb',
-      dark: '#374151',
-      blue: '#3b82f6',
-      green: '#22c55e',
-      red: '#ef4444',
+      white: '#FFFFFF',
+      black: '#000000',
+      peach: '#FFDAB9',
+      darkgrey: '#4B5563',
     };
-    return colors[color] || '#e5e7eb';
+    return colors[color] || '#FFFFFF';
+  }, []);
+
+  // Measure container width on mount and resize
+  useEffect(() => {
+    const updateContainerWidth = () => {
+      if (gridContainerRef.current) {
+        const width = gridContainerRef.current.offsetWidth;
+        // Subtract padding and gap space
+        const availableWidth = width - 32; // Account for padding and gaps
+        setContainerWidth(availableWidth);
+      }
+    };
+
+    updateContainerWidth();
+    window.addEventListener('resize', updateContainerWidth);
+    return () => window.removeEventListener('resize', updateContainerWidth);
   }, []);
 
   // Calculate cell size based on grid dimensions to fit on page
   const getCellSize = useCallback(() => {
     if (!image) return { size: 40, fontSize: 16 };
 
-    // Container width accounting for padding (p-4 = 16px * 2) and borders
-    const containerWidth = 1100; // Max width for the grid container
-
     // Calculate cell size to fit width while maintaining square aspect
     const cellWidth = Math.floor(containerWidth / image.width);
 
     // Apply minimum and maximum constraints
-    const cellSize = Math.max(20, Math.min(cellWidth, 50)); // Min 20px, max 50px
+    const cellSize = Math.max(20, Math.min(cellWidth, 60)); // Min 20px, max 60px
 
     // Font size should be proportional but readable (min 12px, max 24px)
     const fontSize = Math.max(12, Math.min(24, cellSize * 0.6));
 
     return { size: cellSize, fontSize };
-  }, [image]);
+  }, [image, containerWidth]);
 
   useEffect(() => {
     if (!image) return;
@@ -197,11 +211,10 @@ export const PrintableView: React.FC = () => {
               onChange={(e) => setGridBackgroundColor(e.target.value as any)}
               className="px-3 py-1 border border-gray-300 rounded text-sm"
             >
-              <option value="light">Light Gray</option>
-              <option value="dark">Dark Gray</option>
-              <option value="blue">Blue</option>
-              <option value="green">Green</option>
-              <option value="red">Red</option>
+              <option value="white">White</option>
+              <option value="black">Black</option>
+              <option value="peach">Peach</option>
+              <option value="darkgrey">Dark Grey</option>
             </select>
           </div>
 
@@ -253,7 +266,7 @@ export const PrintableView: React.FC = () => {
         </div>
 
         {/* Number Grid */}
-        <div className="border border-gray-300 rounded-lg p-4 bg-white">
+        <div ref={gridContainerRef} className="border border-gray-300 rounded-lg p-4 bg-white">
           <div className="flex justify-between items-center mb-3">
             <h4 className="font-semibold text-lg print:text-base">Building Grid</h4>
             <p className="text-sm text-gray-600">
