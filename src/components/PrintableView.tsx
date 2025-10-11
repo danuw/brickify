@@ -13,6 +13,7 @@ interface ColorMapping {
 
 export const PrintableView: React.FC = () => {
   const image = useBrickifyStore((state) => state.image);
+  const originalImage = useBrickifyStore((state) => state.originalImage);
   const palette = useBrickifyStore((state) => state.palette);
   const gridBackgroundColor = useBrickifyStore((state) => state.gridBackgroundColor);
   const gridPixelShape = useBrickifyStore((state) => state.gridPixelShape);
@@ -66,8 +67,85 @@ export const PrintableView: React.FC = () => {
     return colors[color] || '#FFFFFF';
   }, []);
 
-  // Calculate font size based on cell size
-  const fontSize = Math.max(6, Math.floor(gridCellSize * 0.7));
+  // Helper function to render grid
+  const renderGrid = useCallback((cellSizeOverride?: number, numbersOnly: boolean = false, isPreview: boolean = false) => {
+    if (!image) return null;
+
+    const size = cellSizeOverride || gridCellSize;
+    const fontSizeLocal = Math.max(6, Math.floor(size * 0.7));
+    const plateGap = isPreview ? '2px' : cellSizeOverride ? '2px' : '4px';
+    const cellGap = numbersOnly ? '0' : cellSizeOverride ? '0.5px' : '1px';
+
+    return (
+      <div
+        className="plates-container"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${Math.ceil(image.width / 16)}, auto)`,
+          gap: plateGap,
+          margin: '0 auto',
+          padding: isPreview ? '4px' : '8px',
+          backgroundColor: numbersOnly ? 'white' : getGridBackgroundColor(gridBackgroundColor),
+          borderRadius: isPreview ? '4px' : '8px',
+        }}
+      >
+        {Array.from({ length: Math.ceil(image.height / 16) }).map((_, plateY) =>
+          Array.from({ length: Math.ceil(image.width / 16) }).map((_, plateX) => (
+            <div
+              key={`plate-${plateY}-${plateX}`}
+              className="plate-block"
+              style={{
+                display: 'grid',
+                gridTemplateColumns: `repeat(${Math.min(16, image.width - plateX * 16)}, ${size}px)`,
+                gap: cellGap,
+                gridAutoRows: `${size}px`,
+              }}
+            >
+              {Array.from({ length: Math.min(16, image.height - plateY * 16) }).map((_, localY) =>
+                Array.from({ length: Math.min(16, image.width - plateX * 16) }).map((_, localX) => {
+                  const y = plateY * 16 + localY;
+                  const x = plateX * 16 + localX;
+                  const colorNum = colorGrid[y]?.[x];
+                  if (!colorNum) return null;
+
+                  const colorMapping = colorMappings.find(m => m.number === colorNum);
+                  const bgColor = numbersOnly
+                    ? 'white'
+                    : !colorMapping
+                    ? 'white'
+                    : `rgb(${colorMapping.color.color.join(',')})`;
+                  const textColor = numbersOnly || !colorMapping
+                    ? 'black'
+                    : getTextColor(colorMapping.color.color);
+
+                  return (
+                    <div
+                      key={`${y}-${x}`}
+                      className={`grid-cell ${numbersOnly ? 'grid-cell-no-border' : ''} ${gridPixelShape === 'round' ? 'grid-cell-round' : 'grid-cell-square'}`}
+                      style={{
+                        width: `${size}px`,
+                        height: `${size}px`,
+                        fontSize: `${fontSizeLocal}px`,
+                        backgroundColor: bgColor,
+                        color: textColor,
+                        textShadow: !numbersOnly && textColor === 'white'
+                          ? '0 0 2px rgba(0,0,0,0.8), 0 0 3px rgba(0,0,0,0.5)'
+                          : !numbersOnly && textColor === 'black'
+                          ? '0 0 2px rgba(255,255,255,0.8), 0 0 3px rgba(255,255,255,0.5)'
+                          : 'none',
+                      }}
+                    >
+                      {numbersOnly ? colorNum : ''}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          ))
+        )}
+      </div>
+    );
+  }, [image, colorGrid, colorMappings, gridCellSize, gridPixelShape, gridBackgroundColor, getTextColor, getGridBackgroundColor]);
 
   useEffect(() => {
     if (!image) return;
@@ -217,39 +295,72 @@ export const PrintableView: React.FC = () => {
 
       <div className="printable-content">
         {/* Print Header */}
-        <div className="hidden print:block mb-8">
-          <h1 className="text-3xl font-bold mb-2">LEGO Brick Building Instructions</h1>
-          <p className="text-lg">Size: {image.width}×{image.height} dots</p>
-          <p className="text-sm text-gray-600">Follow the numbers to place the correct colored bricks</p>
+        <div className="hidden print:block mb-4">
+          <h1 className="text-2xl font-bold mb-1">LEGO Brick Building Instructions</h1>
+          <p className="text-sm">Size: {image.width}×{image.height} dots ({Math.ceil(image.width / 16)}×{Math.ceil(image.height / 16)} plates)</p>
         </div>
 
-        {/* Color Legend */}
-        <div className="border border-gray-300 rounded-lg p-4 mb-6 bg-white">
-          <h4 className="font-semibold mb-3 text-lg">Color Legend</h4>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {colorMappings.map((mapping) => (
-              <div
-                key={mapping.number}
-                className="flex items-center gap-2 p-2 border border-gray-200 rounded"
-              >
-                <div className="flex items-center gap-2 flex-1">
-                  <span className="font-bold text-lg min-w-[24px]">{mapping.number}</span>
-                  <div
-                    className="w-8 h-8 rounded border-2 border-gray-400 flex-shrink-0"
-                    style={{ backgroundColor: `rgb(${mapping.color.color.join(',')})` }}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{mapping.color.name}</p>
-                    <p className="text-xs text-gray-600">×{mapping.count}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
+        {/* Top Section: Original Image + Color Preview */}
+        <div className="hidden print:flex gap-4 mb-4">
+          {/* Original Photo */}
+          <div className="flex-shrink-0" style={{ width: '35%' }}>
+            <h4 className="font-semibold text-sm mb-2">Original Image</h4>
+            <div className="border-2 border-gray-300 rounded overflow-hidden">
+              {originalImage && (
+                <img
+                  src={originalImage.src}
+                  alt="Original"
+                  style={{
+                    width: '100%',
+                    height: 'auto',
+                    display: 'block',
+                  }}
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Color Preview */}
+          <div className="flex-1">
+            <h4 className="font-semibold text-sm mb-2">Color Preview</h4>
+            <div style={{ transform: 'scale(0.8)', transformOrigin: 'top left' }}>
+              {renderGrid(4, false, true)}
+            </div>
           </div>
         </div>
 
-        {/* Number Grid */}
-        <div className="border border-gray-300 rounded-lg p-4 bg-white">
+        {/* Color Legend */}
+        <div className="hidden print:block mb-4 border border-gray-300 rounded p-3 bg-white">
+          <h4 className="font-semibold text-sm mb-2">Color Legend & Parts List</h4>
+          <div className="grid grid-cols-4 gap-2 text-xs">
+            {colorMappings.sort((a, b) => b.count - a.count).map((mapping) => (
+              <div
+                key={mapping.number}
+                className="flex items-center gap-1 p-1"
+              >
+                <span className="font-bold min-w-[16px]">{mapping.number}</span>
+                <div
+                  className="w-4 h-4 rounded border border-gray-400 flex-shrink-0"
+                  style={{ backgroundColor: `rgb(${mapping.color.color.join(',')})` }}
+                />
+                <span className="truncate text-[10px]">{mapping.color.name}</span>
+                <span className="font-medium">×{mapping.count}</span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-2 pt-2 border-t border-gray-200 text-xs">
+            <span className="font-semibold">Total:</span> {image.width * image.height} dots, {colorMappings.length} colors
+          </div>
+        </div>
+
+        {/* Numbers-Only Grid for Assembly */}
+        <div className="hidden print:block">
+          <h4 className="font-semibold text-sm mb-2">Assembly Grid (Use numbers to place colored bricks)</h4>
+          {renderGrid(5, true, true)}
+        </div>
+
+        {/* Screen View: Original editable grid */}
+        <div className="print:hidden border border-gray-300 rounded-lg p-4 bg-white">
           <div className="flex justify-between items-center mb-3">
             <h4 className="font-semibold text-lg print:text-base">Building Grid</h4>
             <p className="text-sm text-gray-600">
@@ -257,76 +368,12 @@ export const PrintableView: React.FC = () => {
             </p>
           </div>
           <div className="flex justify-center overflow-x-auto">
-            <div
-              className="plates-container"
-              style={{
-                display: 'grid',
-                gridTemplateColumns: `repeat(${Math.ceil(image.width / 16)}, auto)`,
-                gap: '4px',
-                margin: '0 auto',
-                padding: '8px',
-                backgroundColor: getGridBackgroundColor(gridBackgroundColor),
-                borderRadius: '8px',
-              }}
-            >
-              {Array.from({ length: Math.ceil(image.height / 16) }).map((_, plateY) =>
-                Array.from({ length: Math.ceil(image.width / 16) }).map((_, plateX) => (
-                  <div
-                    key={`plate-${plateY}-${plateX}`}
-                    className="plate-block"
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: `repeat(${Math.min(16, image.width - plateX * 16)}, ${gridCellSize}px)`,
-                      gap: showNumbersOnly ? '0' : '1px',
-                      gridAutoRows: `${gridCellSize}px`,
-                    }}
-                  >
-                    {Array.from({ length: Math.min(16, image.height - plateY * 16) }).map((_, localY) =>
-                      Array.from({ length: Math.min(16, image.width - plateX * 16) }).map((_, localX) => {
-                        const y = plateY * 16 + localY;
-                        const x = plateX * 16 + localX;
-                        const colorNum = colorGrid[y]?.[x];
-                        if (!colorNum) return null;
-
-                        const colorMapping = colorMappings.find(m => m.number === colorNum);
-                        const bgColor = showNumbersOnly
-                          ? 'white'
-                          : !colorMapping
-                          ? 'white'
-                          : `rgb(${colorMapping.color.color.join(',')})`;
-                        const textColor = showNumbersOnly || !colorMapping
-                          ? 'black'
-                          : getTextColor(colorMapping.color.color);
-
-                        return (
-                          <div
-                            key={`${y}-${x}`}
-                            className={`grid-cell ${showNumbersOnly ? 'grid-cell-no-border' : ''} ${gridPixelShape === 'round' ? 'grid-cell-round' : 'grid-cell-square'}`}
-                            style={{
-                              width: `${gridCellSize}px`,
-                              height: `${gridCellSize}px`,
-                              fontSize: `${fontSize}px`,
-                              backgroundColor: bgColor,
-                              color: textColor,
-                              textShadow: textColor === 'white'
-                                ? '0 0 3px rgba(0,0,0,0.8), 0 0 5px rgba(0,0,0,0.5)'
-                                : '0 0 3px rgba(255,255,255,0.8), 0 0 5px rgba(255,255,255,0.5)',
-                            }}
-                          >
-                            {showNumbersOnly ? colorNum : ''}
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
+            {renderGrid(undefined, showNumbersOnly)}
           </div>
         </div>
 
-        {/* Summary Stats */}
-        <div className="border border-gray-300 rounded-lg p-4 mt-6 bg-white print:break-before-page">
+        {/* Summary Stats - Screen View Only */}
+        <div className="print:hidden border border-gray-300 rounded-lg p-4 mt-6 bg-white">
           <h4 className="font-semibold mb-3 text-lg">Parts List Summary</h4>
           <div className="space-y-2">
             <p className="text-sm">
@@ -407,23 +454,26 @@ export const PrintableView: React.FC = () => {
           .print\\:text-base {
             font-size: 1rem;
           }
+          .print\\:flex {
+            display: flex !important;
+          }
 
           /* Scale grid to fit page width */
           .plates-container {
             max-width: 100% !important;
-            gap: 2px !important;
-            padding: 4px !important;
+            gap: 1px !important;
+            padding: 2px !important;
           }
 
           .plate-block {
-            gap: 1px !important;
+            gap: 0.5px !important;
           }
 
           /* Scale grid cells for print */
           .grid-cell {
-            width: 8px !important;
-            height: 8px !important;
-            font-size: 6px !important;
+            width: 4px !important;
+            height: 4px !important;
+            font-size: 3px !important;
           }
         }
       `}</style>
