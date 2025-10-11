@@ -289,7 +289,9 @@ export const PrintableView: React.FC = () => {
                         if (!colorNum) return null;
 
                         const colorMapping = colorMappings.find(m => m.number === colorNum);
-                        const bgColor = showNumbersOnly || !colorMapping
+                        const bgColor = showNumbersOnly
+                          ? 'white'
+                          : !colorMapping
                           ? 'white'
                           : `rgb(${colorMapping.color.color.join(',')})`;
                         const textColor = showNumbersOnly || !colorMapping
@@ -311,7 +313,7 @@ export const PrintableView: React.FC = () => {
                                 : '0 0 3px rgba(255,255,255,0.8), 0 0 5px rgba(255,255,255,0.5)',
                             }}
                           >
-                            {colorNum}
+                            {showNumbersOnly ? colorNum : ''}
                           </div>
                         );
                       })
