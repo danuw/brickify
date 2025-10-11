@@ -258,53 +258,66 @@ export const PrintableView: React.FC = () => {
           </div>
           <div className="flex justify-center overflow-x-auto">
             <div
-              className="building-grid"
+              className="plates-container"
               style={{
                 display: 'grid',
-                gridTemplateColumns: `repeat(${image.width}, ${gridCellSize}px)`,
-                gap: '1px',
+                gridTemplateColumns: `repeat(${Math.ceil(image.width / 16)}, auto)`,
+                gap: '4px',
                 margin: '0 auto',
-                padding: '4px',
+                padding: '8px',
                 backgroundColor: getGridBackgroundColor(gridBackgroundColor),
                 borderRadius: '8px',
-                gridAutoRows: `${gridCellSize}px`,
               }}
             >
-              {colorGrid.flatMap((row, y) =>
-                row.map((colorNum, x) => {
-                  const colorMapping = colorMappings.find(m => m.number === colorNum);
-                  const bgColor = showNumbersOnly || !colorMapping
-                    ? 'white'
-                    : `rgb(${colorMapping.color.color.join(',')})`;
-                  const textColor = showNumbersOnly || !colorMapping
-                    ? 'black'
-                    : getTextColor(colorMapping.color.color);
+              {Array.from({ length: Math.ceil(image.height / 16) }).map((_, plateY) =>
+                Array.from({ length: Math.ceil(image.width / 16) }).map((_, plateX) => (
+                  <div
+                    key={`plate-${plateY}-${plateX}`}
+                    className="plate-block"
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: `repeat(${Math.min(16, image.width - plateX * 16)}, ${gridCellSize}px)`,
+                      gap: showNumbersOnly ? '0' : '1px',
+                      gridAutoRows: `${gridCellSize}px`,
+                    }}
+                  >
+                    {Array.from({ length: Math.min(16, image.height - plateY * 16) }).map((_, localY) =>
+                      Array.from({ length: Math.min(16, image.width - plateX * 16) }).map((_, localX) => {
+                        const y = plateY * 16 + localY;
+                        const x = plateX * 16 + localX;
+                        const colorNum = colorGrid[y]?.[x];
+                        if (!colorNum) return null;
 
-                  // Add thicker borders for 16x16 plate boundaries
-                  const isRightPlateEdge = (x + 1) % 16 === 0 && x + 1 !== image.width;
-                  const isBottomPlateEdge = (y + 1) % 16 === 0 && y + 1 !== image.height;
+                        const colorMapping = colorMappings.find(m => m.number === colorNum);
+                        const bgColor = showNumbersOnly || !colorMapping
+                          ? 'white'
+                          : `rgb(${colorMapping.color.color.join(',')})`;
+                        const textColor = showNumbersOnly || !colorMapping
+                          ? 'black'
+                          : getTextColor(colorMapping.color.color);
 
-                  return (
-                    <div
-                      key={`${y}-${x}`}
-                      className={`grid-cell ${gridPixelShape === 'round' ? 'grid-cell-round' : 'grid-cell-square'}`}
-                      style={{
-                        width: `${gridCellSize}px`,
-                        height: `${gridCellSize}px`,
-                        fontSize: `${fontSize}px`,
-                        backgroundColor: bgColor,
-                        color: textColor,
-                        textShadow: textColor === 'white'
-                          ? '0 0 3px rgba(0,0,0,0.8), 0 0 5px rgba(0,0,0,0.5)'
-                          : '0 0 3px rgba(255,255,255,0.8), 0 0 5px rgba(255,255,255,0.5)',
-                        borderRight: isRightPlateEdge ? '2px solid rgba(0,0,0,0.4)' : undefined,
-                        borderBottom: isBottomPlateEdge ? '2px solid rgba(0,0,0,0.4)' : undefined,
-                      }}
-                    >
-                      {colorNum}
-                    </div>
-                  );
-                })
+                        return (
+                          <div
+                            key={`${y}-${x}`}
+                            className={`grid-cell ${showNumbersOnly ? 'grid-cell-no-border' : ''} ${gridPixelShape === 'round' ? 'grid-cell-round' : 'grid-cell-square'}`}
+                            style={{
+                              width: `${gridCellSize}px`,
+                              height: `${gridCellSize}px`,
+                              fontSize: `${fontSize}px`,
+                              backgroundColor: bgColor,
+                              color: textColor,
+                              textShadow: textColor === 'white'
+                                ? '0 0 3px rgba(0,0,0,0.8), 0 0 5px rgba(0,0,0,0.5)'
+                                : '0 0 3px rgba(255,255,255,0.8), 0 0 5px rgba(255,255,255,0.5)',
+                            }}
+                          >
+                            {colorNum}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                ))
               )}
             </div>
           </div>
@@ -350,6 +363,10 @@ export const PrintableView: React.FC = () => {
           border: 1px solid rgba(0,0,0,0.1);
         }
 
+        .grid-cell-no-border {
+          border: none !important;
+        }
+
         .grid-cell-round {
           border-radius: 50%;
         }
@@ -390,10 +407,14 @@ export const PrintableView: React.FC = () => {
           }
 
           /* Scale grid to fit page width */
-          .building-grid {
+          .plates-container {
             max-width: 100% !important;
+            gap: 2px !important;
+            padding: 4px !important;
+          }
+
+          .plate-block {
             gap: 1px !important;
-            padding: 2px !important;
           }
 
           /* Scale grid cells for print */
