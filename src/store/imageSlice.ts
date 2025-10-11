@@ -24,7 +24,17 @@ export const createImageSlice: StateCreator<ImageSlice> = (set, get) => ({
   originalImage: null,
   image: null,
 
-  setImage: (image) => set({ image, originalImage: image }),
+  setImage: (image) => {
+    set({ image, originalImage: image });
+
+    // Auto-resize to 48x48 when a new image is loaded
+    if (image) {
+      setTimeout(() => {
+        const { resizeImage } = get();
+        resizeImage({ width: 48, height: 48 });
+      }, 0);
+    }
+  },
 
   cropImage: (dimensions) => {
     const { originalImage } = get();

@@ -16,8 +16,10 @@ export const PrintableView: React.FC = () => {
   const palette = useBrickifyStore((state) => state.palette);
   const gridBackgroundColor = useBrickifyStore((state) => state.gridBackgroundColor);
   const gridPixelShape = useBrickifyStore((state) => state.gridPixelShape);
+  const gridCellSize = useBrickifyStore((state) => state.gridCellSize);
   const setGridBackgroundColor = useBrickifyStore((state) => state.setGridBackgroundColor);
   const setGridPixelShape = useBrickifyStore((state) => state.setGridPixelShape);
+  const setGridCellSize = useBrickifyStore((state) => state.setGridCellSize);
   const [colorGrid, setColorGrid] = useState<number[][]>([]);
   const [colorMappings, setColorMappings] = useState<ColorMapping[]>([]);
   const [showNumbersOnly, setShowNumbersOnly] = useState(false);
@@ -64,8 +66,8 @@ export const PrintableView: React.FC = () => {
     return colors[color] || '#FFFFFF';
   }, []);
 
-  // Fixed cell size for consistent grid appearance
-  const cellSize = 10; // Fixed 10px cells
+  // Calculate font size based on cell size
+  const fontSize = Math.max(6, Math.floor(gridCellSize * 0.7));
 
   useEffect(() => {
     if (!image) return;
@@ -170,31 +172,45 @@ export const PrintableView: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex gap-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium">Grid Background:</label>
-            <select
-              value={gridBackgroundColor}
-              onChange={(e) => setGridBackgroundColor(e.target.value as any)}
-              className="px-3 py-1 border border-gray-300 rounded text-sm"
-            >
-              <option value="white">White</option>
-              <option value="black">Black</option>
-              <option value="peach">Peach</option>
-              <option value="darkgrey">Dark Grey</option>
-            </select>
+        <div className="space-y-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="flex gap-4">
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium">Grid Background:</label>
+              <select
+                value={gridBackgroundColor}
+                onChange={(e) => setGridBackgroundColor(e.target.value as any)}
+                className="px-3 py-1 border border-gray-300 rounded text-sm"
+              >
+                <option value="white">White</option>
+                <option value="black">Black</option>
+                <option value="peach">Peach</option>
+                <option value="darkgrey">Dark Grey</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium">Pixel Shape:</label>
+              <select
+                value={gridPixelShape}
+                onChange={(e) => setGridPixelShape(e.target.value as any)}
+                className="px-3 py-1 border border-gray-300 rounded text-sm"
+              >
+                <option value="round">Round (gaps in corners)</option>
+                <option value="square">Square (full coverage)</option>
+              </select>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium">Pixel Shape:</label>
-            <select
-              value={gridPixelShape}
-              onChange={(e) => setGridPixelShape(e.target.value as any)}
-              className="px-3 py-1 border border-gray-300 rounded text-sm"
-            >
-              <option value="round">Round (gaps in corners)</option>
-              <option value="square">Square (full coverage)</option>
-            </select>
+          <div className="flex items-center gap-3">
+            <label className="text-sm font-medium min-w-[80px]">Cell Size: {gridCellSize}px</label>
+            <input
+              type="range"
+              min="5"
+              max="25"
+              value={gridCellSize}
+              onChange={(e) => setGridCellSize(parseInt(e.target.value))}
+              className="flex-1"
+            />
           </div>
         </div>
       </div>
@@ -237,7 +253,7 @@ export const PrintableView: React.FC = () => {
           <div className="flex justify-between items-center mb-3">
             <h4 className="font-semibold text-lg print:text-base">Building Grid</h4>
             <p className="text-sm text-gray-600">
-              {image.width} x {image.height} cells ({cellSize}px per cell)
+              {image.width} x {image.height} cells ({gridCellSize}px per cell)
             </p>
           </div>
           <div className="flex justify-center overflow-x-auto">
@@ -245,12 +261,13 @@ export const PrintableView: React.FC = () => {
               className="building-grid"
               style={{
                 display: 'grid',
-                gridTemplateColumns: `repeat(${image.width}, ${cellSize}px)`,
-                gap: '2px',
+                gridTemplateColumns: `repeat(${image.width}, ${gridCellSize}px)`,
+                gap: '1px',
                 margin: '0 auto',
                 padding: '4px',
                 backgroundColor: getGridBackgroundColor(gridBackgroundColor),
                 borderRadius: '8px',
+                gridAutoRows: `${gridCellSize}px`,
               }}
             >
               {colorGrid.flatMap((row, y) =>
@@ -263,16 +280,25 @@ export const PrintableView: React.FC = () => {
                     ? 'black'
                     : getTextColor(colorMapping.color.color);
 
+                  // Add thicker borders for 16x16 plate boundaries
+                  const isRightPlateEdge = (x + 1) % 16 === 0 && x + 1 !== image.width;
+                  const isBottomPlateEdge = (y + 1) % 16 === 0 && y + 1 !== image.height;
+
                   return (
                     <div
                       key={`${y}-${x}`}
                       className={`grid-cell ${gridPixelShape === 'round' ? 'grid-cell-round' : 'grid-cell-square'}`}
                       style={{
+                        width: `${gridCellSize}px`,
+                        height: `${gridCellSize}px`,
+                        fontSize: `${fontSize}px`,
                         backgroundColor: bgColor,
                         color: textColor,
                         textShadow: textColor === 'white'
                           ? '0 0 3px rgba(0,0,0,0.8), 0 0 5px rgba(0,0,0,0.5)'
                           : '0 0 3px rgba(255,255,255,0.8), 0 0 5px rgba(255,255,255,0.5)',
+                        borderRight: isRightPlateEdge ? '2px solid rgba(0,0,0,0.4)' : undefined,
+                        borderBottom: isBottomPlateEdge ? '2px solid rgba(0,0,0,0.4)' : undefined,
                       }}
                     >
                       {colorNum}
@@ -317,12 +343,9 @@ export const PrintableView: React.FC = () => {
       <style>{`
         /* Grid cell base styles */
         .grid-cell {
-          width: 10px;
-          height: 10px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 8px;
           font-weight: 900;
           border: 1px solid rgba(0,0,0,0.1);
         }

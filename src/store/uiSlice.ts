@@ -10,12 +10,14 @@ export interface UISlice {
   pixelShape: PixelShape;
   gridBackgroundColor: GridBackgroundColor;
   gridPixelShape: PixelShape;
+  gridCellSize: number;
   togglePixelView: () => void;
   setShowPixelView: (show: boolean) => void;
   setBackgroundColor: (color: BackgroundColor) => void;
   setPixelShape: (shape: PixelShape) => void;
   setGridBackgroundColor: (color: GridBackgroundColor) => void;
   setGridPixelShape: (shape: PixelShape) => void;
+  setGridCellSize: (size: number) => void;
 }
 
 export const createUISlice: StateCreator<UISlice> = (set) => ({
@@ -24,6 +26,7 @@ export const createUISlice: StateCreator<UISlice> = (set) => ({
   pixelShape: 'round',
   gridBackgroundColor: 'white',
   gridPixelShape: 'round',
+  gridCellSize: 10,
 
   togglePixelView: () => set((state) => ({ showPixelView: !state.showPixelView })),
 
@@ -36,4 +39,6 @@ export const createUISlice: StateCreator<UISlice> = (set) => ({
   setGridBackgroundColor: (color) => set({ gridBackgroundColor: color }),
 
   setGridPixelShape: (shape) => set({ gridPixelShape: shape }),
+
+  setGridCellSize: (size) => set({ gridCellSize: size }),
 });
