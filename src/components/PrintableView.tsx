@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useBrickifyStore } from '@/store/store';
 import { Color } from '@/store/paletteSlice';
 import { colorCorrection } from '@/lib/utils';
@@ -22,8 +22,6 @@ export const PrintableView: React.FC = () => {
   const [colorMappings, setColorMappings] = useState<ColorMapping[]>([]);
   const [showNumbersOnly, setShowNumbersOnly] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const gridContainerRef = useRef<HTMLDivElement>(null);
-  const [containerWidth, setContainerWidth] = useState(1100);
 
   const findClosestColor = useCallback((r: number, g: number, b: number): Color => {
     let minDistance = Infinity;
@@ -66,37 +64,8 @@ export const PrintableView: React.FC = () => {
     return colors[color] || '#FFFFFF';
   }, []);
 
-  // Measure container width on mount and resize
-  useEffect(() => {
-    const updateContainerWidth = () => {
-      if (gridContainerRef.current) {
-        const width = gridContainerRef.current.offsetWidth;
-        // Subtract padding and gap space
-        const availableWidth = width - 32; // Account for padding and gaps
-        setContainerWidth(availableWidth);
-      }
-    };
-
-    updateContainerWidth();
-    window.addEventListener('resize', updateContainerWidth);
-    return () => window.removeEventListener('resize', updateContainerWidth);
-  }, []);
-
-  // Calculate cell size based on grid dimensions to fit on page
-  const getCellSize = useCallback(() => {
-    if (!image) return { size: 40, fontSize: 16 };
-
-    // Calculate cell size to fit width while maintaining square aspect
-    const cellWidth = Math.floor(containerWidth / image.width);
-
-    // Apply minimum and maximum constraints
-    const cellSize = Math.max(20, Math.min(cellWidth, 60)); // Min 20px, max 60px
-
-    // Font size should be proportional but readable (min 12px, max 24px)
-    const fontSize = Math.max(12, Math.min(24, cellSize * 0.6));
-
-    return { size: cellSize, fontSize };
-  }, [image, containerWidth]);
+  // Fixed cell size for consistent grid appearance
+  const cellSize = 10; // Fixed 10px cells
 
   useEffect(() => {
     if (!image) return;
@@ -183,8 +152,6 @@ export const PrintableView: React.FC = () => {
     );
   }
 
-  const { size: cellSize, fontSize } = getCellSize();
-
   return (
     <div className="space-y-4">
       <div className="space-y-3 print:hidden">
@@ -266,7 +233,7 @@ export const PrintableView: React.FC = () => {
         </div>
 
         {/* Number Grid */}
-        <div ref={gridContainerRef} className="border border-gray-300 rounded-lg p-4 bg-white">
+        <div className="border border-gray-300 rounded-lg p-4 bg-white">
           <div className="flex justify-between items-center mb-3">
             <h4 className="font-semibold text-lg print:text-base">Building Grid</h4>
             <p className="text-sm text-gray-600">
@@ -299,22 +266,13 @@ export const PrintableView: React.FC = () => {
                   return (
                     <div
                       key={`${y}-${x}`}
-                      className="grid-cell"
+                      className={`grid-cell ${gridPixelShape === 'round' ? 'grid-cell-round' : 'grid-cell-square'}`}
                       style={{
-                        width: `${cellSize}px`,
-                        height: `${cellSize}px`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
                         backgroundColor: bgColor,
                         color: textColor,
-                        fontSize: `${fontSize}px`,
-                        fontWeight: '900',
                         textShadow: textColor === 'white'
                           ? '0 0 3px rgba(0,0,0,0.8), 0 0 5px rgba(0,0,0,0.5)'
                           : '0 0 3px rgba(255,255,255,0.8), 0 0 5px rgba(255,255,255,0.5)',
-                        borderRadius: gridPixelShape === 'round' ? '50%' : '0',
-                        border: '1px solid rgba(0,0,0,0.1)',
                       }}
                     >
                       {colorNum}
@@ -357,6 +315,26 @@ export const PrintableView: React.FC = () => {
       </div>
 
       <style>{`
+        /* Grid cell base styles */
+        .grid-cell {
+          width: 10px;
+          height: 10px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 8px;
+          font-weight: 900;
+          border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .grid-cell-round {
+          border-radius: 50%;
+        }
+
+        .grid-cell-square {
+          border-radius: 0;
+        }
+
         @media print {
           @page {
             size: A4;
@@ -397,9 +375,9 @@ export const PrintableView: React.FC = () => {
 
           /* Scale grid cells for print */
           .grid-cell {
-            width: 18px !important;
-            height: 18px !important;
-            font-size: 9px !important;
+            width: 8px !important;
+            height: 8px !important;
+            font-size: 6px !important;
           }
         }
       `}</style>

@@ -10,7 +10,9 @@
       "Bash(git commit -m \"$(cat <<''EOF''\nAdd visual crop tool, multiple palettes, and history feature\n\nNew Features:\n- Visual crop tool with react-easy-crop library\n  - Interactive dragging and zooming for cropping\n  - Better UX compared to text input fields\n- Output size controls with slider interface\n- 6 color palette presets:\n  - Sunset (original warm gradient)\n  - Monochrome (grayscale)\n  - Vibrant (rainbow colors)\n  - Pastel (soft tones)\n  - Earth Tones (natural colors)\n  - Ocean (deep blue to cyan)\n- History feature to save and reload recent brickifications\n  - Saves up to 10 recent versions\n  - Click thumbnails to restore previous work\n  - Stores image, dimensions, and palette used\n\nUI Improvements:\n- Fixed canvas display size with max-width styling\n- Added pixelated rendering for better pixel art display\n- Added labels and headers for better organization\n- Improved ColorPalette component with preset selector\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(git commit -m \"$(cat <<''EOF''\nMake cropping always operate on original uploaded image\n\nChanges:\n- Store both originalImage and processed image in imageSlice\n- Crop tool now always uses originalImage as source\n- Resize continues to work on current (possibly cropped) image\n- Added UI label showing crop operates on original dimensions\n- Updated text to clarify resize works on current image\n\nWorkflow now:\n1. Upload image (stores as both original and current)\n2. Crop from original image (updates current)\n3. Resize current image to LEGO plate dimensions\n4. Generate pixel view and printable instructions\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(git commit:*)",
-      "Bash(npx @playwright/mcp@latest:*)"
+      "Bash(npx @playwright/mcp@latest:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []
