@@ -323,8 +323,8 @@ export const PrintableView: React.FC = () => {
           {/* Color Preview */}
           <div className="flex-1">
             <h4 className="font-semibold text-sm mb-2">Color Preview</h4>
-            <div style={{ transform: 'scale(0.8)', transformOrigin: 'top left' }}>
-              {renderGrid(4, false, true)}
+            <div style={{ transform: 'scale(0.5)', transformOrigin: 'top left' }}>
+              {renderGrid(undefined, false, false)}
             </div>
           </div>
         </div>
@@ -356,7 +356,7 @@ export const PrintableView: React.FC = () => {
         {/* Numbers-Only Grid for Assembly */}
         <div className="hidden print:block">
           <h4 className="font-semibold text-sm mb-2">Assembly Grid (Use numbers to place colored bricks)</h4>
-          {renderGrid(10, true, true)}
+          {renderGrid(undefined, true, false)}
         </div>
 
         {/* Screen View: Original editable grid */}
@@ -410,6 +410,14 @@ export const PrintableView: React.FC = () => {
           justify-content: center;
           font-weight: 900;
           border: 1px solid rgba(0,0,0,0.1);
+          line-height: 1;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+
+        .plates-container {
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
         }
 
         .grid-cell-no-border {
