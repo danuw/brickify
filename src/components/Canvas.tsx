@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { colorCorrection } from '@/lib/utils';
 import { useBrickifyStore } from '@/store/store';
 import { Color } from '@/store/paletteSlice';
+import { BackgroundColor, PixelShape } from '@/store/uiSlice';
 import { Button } from './ui/button';
 import { Select } from './ui/select';
 import { LoadingOverlay } from './ui/spinner';
@@ -59,60 +60,69 @@ export const Canvas: React.FC = () => {
     if (!ctx || !pixelCtx) return;
 
     setIsRendering(true);
+    try {
+      // Use setTimeout to allow UI to update with loading state
+      await new Promise(resolve => setTimeout(resolve, 0));
 
-    // Use setTimeout to allow UI to update with loading state
-    await new Promise(resolve => setTimeout(resolve, 0));
+      if (!canvasRef.current || !pixelCanvasRef.current) {
+        return;
+      }
 
-    const imageData = ctx.getImageData(0, 0, canvasRef.current.width, canvasRef.current.height);
-    const data = imageData.data;
-    const dotSize = 8; // Increased to accommodate gap
-    const blockSize = 7; // Actual block size (leaving 1px gap)
+      const sourceCanvas = canvasRef.current;
+      const targetCanvas = pixelCanvasRef.current;
+      const imageData = ctx.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height);
+      const data = imageData.data;
+      const dotSize = 8; // Increased to accommodate gap
+      const blockSize = 7; // Actual block size (leaving 1px gap)
 
-    pixelCanvasRef.current.width = canvasRef.current.width * dotSize;
-    pixelCanvasRef.current.height = canvasRef.current.height * dotSize;
+      targetCanvas.width = sourceCanvas.width * dotSize;
+      targetCanvas.height = sourceCanvas.height * dotSize;
 
-    // Fill background
-    pixelCtx.fillStyle = getBackgroundColorValue(backgroundColor);
-    pixelCtx.fillRect(0, 0, pixelCanvasRef.current.width, pixelCanvasRef.current.height);
+      // Fill background
+      pixelCtx.fillStyle = getBackgroundColorValue(backgroundColor);
+      pixelCtx.fillRect(0, 0, targetCanvas.width, targetCanvas.height);
 
-    for (let y = 0; y < canvasRef.current.height; y++) {
-      for (let x = 0; x < canvasRef.current.width; x++) {
-        const index = (y * canvasRef.current.width + x) * 4;
-        const [r, g, b] = colorCorrection(
-          data[index],
-          data[index + 1],
-          data[index + 2]
-        );
-        const a = data[index + 3] / 255;
-
-        const { color: [closestR, closestG, closestB] } = findClosestColor(r, g, b);
-
-        pixelCtx.fillStyle = `rgba(${closestR},${closestG},${closestB},${a})`;
-
-        if (pixelShape === 'round') {
-          // Draw round pixel
-          pixelCtx.beginPath();
-          pixelCtx.arc(
-            x * dotSize + dotSize / 2,
-            y * dotSize + dotSize / 2,
-            blockSize / 2,
-            0,
-            Math.PI * 2
+      for (let y = 0; y < sourceCanvas.height; y++) {
+        for (let x = 0; x < sourceCanvas.width; x++) {
+          const index = (y * sourceCanvas.width + x) * 4;
+          const [r, g, b] = colorCorrection(
+            data[index],
+            data[index + 1],
+            data[index + 2]
           );
-          pixelCtx.fill();
-        } else {
-          // Draw square pixel with gap
-          pixelCtx.fillRect(
-            x * dotSize + 0.5,
-            y * dotSize + 0.5,
-            blockSize,
-            blockSize
-          );
+          const a = data[index + 3] / 255;
+
+          const { color: [closestR, closestG, closestB] } = findClosestColor(r, g, b);
+
+          pixelCtx.fillStyle = `rgba(${closestR},${closestG},${closestB},${a})`;
+
+          if (pixelShape === 'round') {
+            // Draw round pixel
+            pixelCtx.beginPath();
+            pixelCtx.arc(
+              x * dotSize + dotSize / 2,
+              y * dotSize + dotSize / 2,
+              blockSize / 2,
+              0,
+              Math.PI * 2
+            );
+            pixelCtx.fill();
+          } else {
+            // Draw square pixel with gap
+            pixelCtx.fillRect(
+              x * dotSize + 0.5,
+              y * dotSize + 0.5,
+              blockSize,
+              blockSize
+            );
+          }
         }
       }
+    } catch (error) {
+      console.error('Failed to render LEGO brick preview:', error);
+    } finally {
+      setIsRendering(false);
     }
-
-    setIsRendering(false);
   }, [findClosestColor, backgroundColor, pixelShape, getBackgroundColorValue]);
 
   useEffect(() => {
@@ -160,7 +170,7 @@ export const Canvas: React.FC = () => {
               <label className="text-sm font-medium">Background:</label>
               <Select
                 value={backgroundColor}
-                onChange={(e) => setBackgroundColor(e.target.value as any)}
+                onChange={(e) => setBackgroundColor(e.target.value as BackgroundColor)}
                 className="w-32"
                 disabled={isRendering}
               >
@@ -175,7 +185,7 @@ export const Canvas: React.FC = () => {
               <label className="text-sm font-medium">Shape:</label>
               <Select
                 value={pixelShape}
-                onChange={(e) => setPixelShape(e.target.value as any)}
+                onChange={(e) => setPixelShape(e.target.value as PixelShape)}
                 className="w-32"
                 disabled={isRendering}
               >
@@ -185,14 +195,13 @@ export const Canvas: React.FC = () => {
             </div>
           </div>
 
-          {isRendering ? (
+          <canvas
+            ref={pixelCanvasRef}
+            className={`border border-gray-200 rounded-lg max-w-full h-auto ${isRendering ? 'hidden' : ''}`}
+            style={{ imageRendering: 'pixelated' }}
+          />
+          {isRendering && (
             <LoadingOverlay message="Rendering LEGO brick preview..." />
-          ) : (
-            <canvas
-              ref={pixelCanvasRef}
-              className="border border-gray-200 rounded-lg max-w-full h-auto"
-              style={{ imageRendering: 'pixelated' }}
-            />
           )}
         </div>
       )}

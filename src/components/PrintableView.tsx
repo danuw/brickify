@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useBrickifyStore } from '@/store/store';
 import { Color } from '@/store/paletteSlice';
+import { GridBackgroundColor, PixelShape } from '@/store/uiSlice';
 import { colorCorrection } from '@/lib/utils';
 import { Button } from './ui/button';
 import { LoadingOverlay } from './ui/spinner';
@@ -256,7 +257,7 @@ export const PrintableView: React.FC = () => {
               <label className="text-sm font-medium">Grid Background:</label>
               <select
                 value={gridBackgroundColor}
-                onChange={(e) => setGridBackgroundColor(e.target.value as any)}
+                onChange={(e) => setGridBackgroundColor(e.target.value as GridBackgroundColor)}
                 className="px-3 py-1 border border-gray-300 rounded text-sm"
               >
                 <option value="white">White</option>
@@ -270,7 +271,7 @@ export const PrintableView: React.FC = () => {
               <label className="text-sm font-medium">Pixel Shape:</label>
               <select
                 value={gridPixelShape}
-                onChange={(e) => setGridPixelShape(e.target.value as any)}
+                onChange={(e) => setGridPixelShape(e.target.value as PixelShape)}
                 className="px-3 py-1 border border-gray-300 rounded text-sm"
               >
                 <option value="round">Round (gaps in corners)</option>
