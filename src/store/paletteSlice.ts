@@ -9,6 +9,8 @@ export interface PalettePreset {
   name: string;
   description: string;
   colors: Color[];
+  /** Optional buy link shown alongside the palette (e.g. affiliate URL) */
+  link?: string;
 }
 
 const sunsetPalette: Color[] = [
@@ -70,6 +72,66 @@ const oceanPalette: Color[] = [
   { name: "Light Cyan", color: [221, 244, 247] }
 ];
 
+/**
+ * All individually purchasable 1×1 round brick colors from the AliExpress listing.
+ * RGB values match standard LEGO/BrickLink color equivalents.
+ * Buy link: https://s.click.aliexpress.com/e/_c4Fl1IcF
+ */
+const aliExpressBricksPalette: Color[] = [
+  { name: "White",              color: [255, 255, 255] },
+  { name: "Light Gray",         color: [228, 228, 228] },
+  { name: "Light Bluish Gray",  color: [175, 181, 199] },
+  { name: "Dark Bluish Gray",   color: [89,  93,  96 ] },
+  { name: "Dark Gray",          color: [61,  61,  61 ] },
+  { name: "Black",              color: [0,   0,   0  ] },
+  { name: "Light Royal Blue",   color: [75,  151, 220] },
+  { name: "Slate Gray",         color: [105, 105, 105] },
+  { name: "Skin White",         color: [252, 232, 210] },
+  { name: "Flesh Pink",         color: [255, 185, 155] },
+  { name: "Light Flesh",        color: [255, 214, 191] },
+  { name: "Flesh Tan",          color: [222, 178, 144] },
+  { name: "Flesh Red",          color: [193, 102, 65 ] },
+  { name: "Nougat",             color: [208, 145, 104] },
+  { name: "Medium Dark Flesh",  color: [167, 85,  50 ] },
+  { name: "Dark Orange",        color: [169, 85,  40 ] },
+  { name: "Brown",              color: [118, 77,  43 ] },
+  { name: "Dark Brown",         color: [60,  35,  15 ] },
+  { name: "Tan",                color: [222, 199, 144] },
+  { name: "Dark Tan",           color: [150, 130, 91 ] },
+  { name: "Bright Yellow",      color: [255, 214, 0  ] },
+  { name: "Yellow",             color: [247, 209, 23 ] },
+  { name: "Dark Yellow",        color: [213, 166, 0  ] },
+  { name: "Bright Orange",      color: [255, 126, 20 ] },
+  { name: "Orange",             color: [240, 120, 0  ] },
+  { name: "Light Pink",         color: [255, 182, 193] },
+  { name: "Bright Pink",        color: [255, 92,  168] },
+  { name: "Dark Pink",          color: [212, 101, 147] },
+  { name: "Magenta",            color: [213, 0,   107] },
+  { name: "Red",                color: [196, 40,  28 ] },
+  { name: "Dark Red",           color: [123, 28,  28 ] },
+  { name: "Sand Red",           color: [194, 116, 92 ] },
+  { name: "Medium Lavender",    color: [159, 143, 186] },
+  { name: "Purple",             color: [125, 62,  182] },
+  { name: "Dark Purple",        color: [65,  20,  117] },
+  { name: "Medium Blue",        color: [85,  154, 193] },
+  { name: "Medium Azure",       color: [66,  192, 251] },
+  { name: "Navy Blue",          color: [0,   32,  108] },
+  { name: "Dark Azure",         color: [0,   111, 192] },
+  { name: "Bright Light Blue",  color: [159, 195, 233] },
+  { name: "Blue",               color: [13,  105, 171] },
+  { name: "Dark Blue",          color: [0,   32,  96 ] },
+  { name: "Sand Blue",          color: [125, 156, 186] },
+  { name: "Yellowish Green",    color: [215, 240, 0  ] },
+  { name: "Lime",               color: [180, 210, 0  ] },
+  { name: "Olive Green",        color: [124, 144, 0  ] },
+  { name: "Sand Green",         color: [120, 163, 129] },
+  { name: "Light Aqua",         color: [166, 218, 209] },
+  { name: "Bright Green",       color: [75,  159, 74 ] },
+  { name: "Green",              color: [37,  134, 72 ] },
+  { name: "Dark Green",         color: [0,   100, 46 ] },
+  { name: "Army Green",         color: [72,  89,  42 ] },
+];
+
 export const PALETTE_PRESETS: PalettePreset[] = [
   {
     name: "Sunset",
@@ -100,19 +162,29 @@ export const PALETTE_PRESETS: PalettePreset[] = [
     name: "Ocean",
     description: "Deep sea to light cyan",
     colors: oceanPalette
+  },
+  {
+    name: "AliExpress Bricks",
+    description: "All 52 individually buyable 1×1 round brick colors",
+    colors: aliExpressBricksPalette,
+    link: "https://s.click.aliexpress.com/e/_c4Fl1IcF"
   }
 ];
 
 export interface PaletteSlice {
   palette: Color[];
-  currentPresetIndex: number;
+  currentPresetIndex: number;  // -1 = "from image" custom palette
+  customColorCount: number;
   setPalette: (palette: Color[]) => void;
   selectPreset: (index: number) => void;
+  setCustomPaletteFromImage: (palette: Color[]) => void;
+  setCustomColorCount: (count: number) => void;
 }
 
 export const createPaletteSlice: StateCreator<PaletteSlice> = (set) => ({
   palette: sunsetPalette,
   currentPresetIndex: 0,
+  customColorCount: 8,
 
   setPalette: (palette) => set({ palette }),
 
@@ -123,4 +195,8 @@ export const createPaletteSlice: StateCreator<PaletteSlice> = (set) => ({
       currentPresetIndex: index
     });
   },
+
+  setCustomPaletteFromImage: (palette) => set({ palette, currentPresetIndex: -1 }),
+
+  setCustomColorCount: (count) => set({ customColorCount: count }),
 });
