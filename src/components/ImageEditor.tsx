@@ -1,26 +1,14 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
+import { useBrickifyStore } from '@/store/store';
+import { CropDimensions, ResizeDimensions } from '@/store/imageSlice';
 
-interface ImageEditorProps {
-  image: HTMLImageElement | null;
-  onCrop: (dimensions: CropDimensions) => void;
-  onResize: (dimensions: ResizeDimensions) => void;
-}
+export const ImageEditor: React.FC = () => {
+  const image = useBrickifyStore((state) => state.image);
+  const cropImage = useBrickifyStore((state) => state.cropImage);
+  const resizeImage = useBrickifyStore((state) => state.resizeImage);
 
-export interface CropDimensions {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-export interface ResizeDimensions {
-  width: number;
-  height: number;
-}
-
-export const ImageEditor: React.FC<ImageEditorProps> = ({ image, onCrop, onResize }) => {
   const [cropDimensions, setCropDimensions] = React.useState<CropDimensions>({
     x: 0,
     y: 0,
@@ -79,7 +67,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ image, onCrop, onResiz
               placeholder="Height"
             />
           </div>
-          <Button onClick={() => onCrop(cropDimensions)}>Crop</Button>
+          <Button onClick={() => cropImage(cropDimensions)}>Crop</Button>
         </div>
 
         <div className="space-y-2">
@@ -98,7 +86,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ image, onCrop, onResiz
               placeholder="Height"
             />
           </div>
-          <Button onClick={() => onResize(resizeDimensions)}>Resize</Button>
+          <Button onClick={() => resizeImage(resizeDimensions)}>Resize</Button>
         </div>
       </div>
     </div>

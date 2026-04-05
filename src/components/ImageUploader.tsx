@@ -1,11 +1,10 @@
 import React from 'react';
 import { Input } from './ui/input';
+import { useBrickifyStore } from '@/store/store';
 
-interface ImageUploaderProps {
-  onImageUpload: (image: HTMLImageElement) => void;
-}
+export const ImageUploader: React.FC = () => {
+  const setImage = useBrickifyStore((state) => state.setImage);
 
-export const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageUpload }) => {
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -13,7 +12,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageUpload }) =
       reader.onload = (e) => {
         const image = new Image();
         image.src = e.target?.result as string;
-        image.onload = () => onImageUpload(image);
+        image.onload = () => setImage(image);
       };
       reader.readAsDataURL(file);
     }
