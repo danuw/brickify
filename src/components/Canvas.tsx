@@ -1,8 +1,9 @@
-import React, { useRef, useEffect, useCallback, useState } from 'react';
+import React, { useRef, useEffect, useCallback, useState, useMemo } from 'react';
 import { colorCorrection } from '@/lib/utils';
 import { useBrickifyStore } from '@/store/store';
 import { Color } from '@/store/paletteSlice';
 import { BackgroundColor, PixelShape } from '@/store/uiSlice';
+import { analyzeLuminance, adjustColorsForContrast } from '@/lib/contrastAnalyzer';
 import { Button } from './ui/button';
 import { Select } from './ui/select';
 import { LoadingOverlay } from './ui/spinner';
@@ -18,14 +19,47 @@ export const Canvas: React.FC = () => {
   const addToHistory = useBrickifyStore((state) => state.addToHistory);
   const backgroundColor = useBrickifyStore((state) => state.backgroundColor);
   const pixelShape = useBrickifyStore((state) => state.pixelShape);
+  const autoContrastEnabled = useBrickifyStore((state) => state.autoContrastEnabled);
+  const brightnessAmount = useBrickifyStore((state) => state.brightnessAmount);
+  const contrastAmount = useBrickifyStore((state) => state.contrastAmount);
   const setBackgroundColor = useBrickifyStore((state) => state.setBackgroundColor);
   const setPixelShape = useBrickifyStore((state) => state.setPixelShape);
 
+  // Compute adjusted palette based on auto-contrast settings
+  const adjustedPalette = useMemo(() => {
+    if (!autoContrastEnabled || !image || !canvasRef.current) return palette;
+
+    try {
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      if (!ctx || canvas.width === 0 || canvas.height === 0) return palette;
+
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const targetStats = analyzeLuminance(imageData);
+      // Apply contrast scale factor
+      const scaledStdDev = targetStats.stdDev * contrastAmount;
+      const adjustedStats = { ...targetStats, stdDev: scaledStdDev };
+
+      const adjusted = adjustColorsForContrast(
+        palette.map(c => c.color),
+        adjustedStats,
+        brightnessAmount * 0.5 // normalize brightness to ~[-0.5, 0.5]
+      );
+
+      return adjusted.map((color, i) => ({
+        name: palette[i].name,
+        color: color as [number, number, number]
+      }));
+    } catch {
+      return palette;
+    }
+  }, [palette, autoContrastEnabled, image, brightnessAmount, contrastAmount]);
+
   const findClosestColor = useCallback((r: number, g: number, b: number): Color => {
     let minDistance = Infinity;
-    let closestColor = palette[0];
+    let closestColor = adjustedPalette[0];
 
-    for (const color of palette) {
+    for (const color of adjustedPalette) {
       const [pr, pg, pb] = color.color;
       const distance = Math.sqrt(
         Math.pow(r - pr, 2) +
@@ -40,7 +74,7 @@ export const Canvas: React.FC = () => {
     }
 
     return closestColor;
-  }, [palette]);
+  }, [adjustedPalette]);
 
   const getBackgroundColorValue = useCallback((color: string): string => {
     const colors: Record<string, string> = {

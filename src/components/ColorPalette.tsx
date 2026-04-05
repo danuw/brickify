@@ -8,9 +8,15 @@ export const ColorPalette: React.FC = () => {
   const palette = useBrickifyStore((state) => state.palette);
   const currentPresetIndex = useBrickifyStore((state) => state.currentPresetIndex);
   const customColorCount = useBrickifyStore((state) => state.customColorCount);
+  const autoContrastEnabled = useBrickifyStore((state) => state.autoContrastEnabled);
+  const brightnessAmount = useBrickifyStore((state) => state.brightnessAmount);
+  const contrastAmount = useBrickifyStore((state) => state.contrastAmount);
   const selectPreset = useBrickifyStore((state) => state.selectPreset);
   const setCustomPaletteFromImage = useBrickifyStore((state) => state.setCustomPaletteFromImage);
   const setCustomColorCount = useBrickifyStore((state) => state.setCustomColorCount);
+  const setAutoContrastEnabled = useBrickifyStore((state) => state.setAutoContrastEnabled);
+  const setBrightnessAmount = useBrickifyStore((state) => state.setBrightnessAmount);
+  const setContrastAmount = useBrickifyStore((state) => state.setContrastAmount);
   const image = useBrickifyStore((state) => state.image);
 
   const [isExtracting, setIsExtracting] = useState(false);
@@ -107,6 +113,64 @@ export const ColorPalette: React.FC = () => {
             >
               {isExtracting ? 'Extracting…' : currentPresetIndex === -1 ? '↺ Re-extract' : 'From Image'}
             </Button>
+          </div>
+        )}
+
+        {/* Contrast adjustment controls */}
+        {image && (
+          <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200 space-y-3">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="auto-contrast"
+                checked={autoContrastEnabled}
+                onChange={(e) => setAutoContrastEnabled(e.target.checked)}
+                className="w-4 h-4 cursor-pointer"
+              />
+              <label htmlFor="auto-contrast" className="text-sm font-medium cursor-pointer">
+                Auto-match image contrast
+              </label>
+            </div>
+
+            {autoContrastEnabled && (
+              <div className="space-y-2 pl-6">
+                <div>
+                  <label className="text-xs font-medium text-gray-700">
+                    Contrast: {(contrastAmount * 100).toFixed(0)}%
+                  </label>
+                  <input
+                    type="range"
+                    min={0.5}
+                    max={2}
+                    step={0.1}
+                    value={contrastAmount}
+                    onChange={(e) => setContrastAmount(Number(e.target.value))}
+                    className="w-full"
+                  />
+                  <div className="flex justify-between text-xs text-gray-400">
+                    <span>50%</span><span>200%</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-medium text-gray-700">
+                    Brightness: {brightnessAmount > 0 ? '+' : ''}{(brightnessAmount * 100).toFixed(0)}%
+                  </label>
+                  <input
+                    type="range"
+                    min={-1}
+                    max={1}
+                    step={0.1}
+                    value={brightnessAmount}
+                    onChange={(e) => setBrightnessAmount(Number(e.target.value))}
+                    className="w-full"
+                  />
+                  <div className="flex justify-between text-xs text-gray-400">
+                    <span>−100%</span><span>+100%</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

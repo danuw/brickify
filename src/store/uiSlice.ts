@@ -11,6 +11,9 @@ export interface UISlice {
   gridBackgroundColor: GridBackgroundColor;
   gridPixelShape: PixelShape;
   gridCellSize: number;
+  autoContrastEnabled: boolean;
+  brightnessAmount: number;
+  contrastAmount: number;
   togglePixelView: () => void;
   setShowPixelView: (show: boolean) => void;
   setBackgroundColor: (color: BackgroundColor) => void;
@@ -18,6 +21,9 @@ export interface UISlice {
   setGridBackgroundColor: (color: GridBackgroundColor) => void;
   setGridPixelShape: (shape: PixelShape) => void;
   setGridCellSize: (size: number) => void;
+  setAutoContrastEnabled: (enabled: boolean) => void;
+  setBrightnessAmount: (amount: number) => void;
+  setContrastAmount: (amount: number) => void;
 }
 
 export const createUISlice: StateCreator<UISlice> = (set) => ({
@@ -27,6 +33,9 @@ export const createUISlice: StateCreator<UISlice> = (set) => ({
   gridBackgroundColor: 'white',
   gridPixelShape: 'round',
   gridCellSize: 10,
+  autoContrastEnabled: false,
+  brightnessAmount: 0,
+  contrastAmount: 1,
 
   togglePixelView: () => set((state) => ({ showPixelView: !state.showPixelView })),
 
@@ -41,4 +50,10 @@ export const createUISlice: StateCreator<UISlice> = (set) => ({
   setGridPixelShape: (shape) => set({ gridPixelShape: shape }),
 
   setGridCellSize: (size) => set({ gridCellSize: size }),
+
+  setAutoContrastEnabled: (enabled) => set({ autoContrastEnabled: enabled }),
+
+  setBrightnessAmount: (amount) => set({ brightnessAmount: amount }),
+
+  setContrastAmount: (amount) => set({ contrastAmount: amount }),
 });
