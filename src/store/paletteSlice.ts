@@ -116,8 +116,11 @@ export const createPaletteSlice: StateCreator<PaletteSlice> = (set) => ({
 
   setPalette: (palette) => set({ palette }),
 
-  selectPreset: (index) => set({
-    palette: PALETTE_PRESETS[index].colors,
-    currentPresetIndex: index
-  }),
+  selectPreset: (index) => {
+    if (index < 0 || index >= PALETTE_PRESETS.length) return;
+    set({
+      palette: PALETTE_PRESETS[index].colors,
+      currentPresetIndex: index
+    });
+  },
 });
