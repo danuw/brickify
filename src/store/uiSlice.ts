@@ -51,7 +51,12 @@ export const createUISlice: StateCreator<UISlice> = (set) => ({
 
   setGridCellSize: (size) => set({ gridCellSize: size }),
 
-  setAutoContrastEnabled: (enabled) => set({ autoContrastEnabled: enabled }),
+  setAutoContrastEnabled: (enabled) =>
+    set((state) => ({
+      autoContrastEnabled: enabled,
+      brightnessAmount: enabled ? 0 : state.brightnessAmount,
+      contrastAmount: enabled ? 1 : state.contrastAmount,
+    })),
 
   setBrightnessAmount: (amount) => set({ brightnessAmount: amount }),
 

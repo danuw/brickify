@@ -28,6 +28,42 @@ To get started, follow these steps:
 
 > If you choose square type bricks, the background color wont matter much - especially if you have a frame - otherwise be careful about the background colour for the overall effect.
 
+## Dokploy Deployment
+
+This repository is Dokploy-ready using Docker Compose.
+
+### Required environment variables
+
+- `PORT` (optional, default: `8080`): internal container port used by the app.
+- `HOST_PORT` (optional, default: `8080`): host port mapping for direct access.
+
+### Local Docker Compose run
+
+```bash
+docker compose up --build
+```
+
+Health check endpoint:
+
+- `GET /health` (returns `200`)
+
+### Dokploy setup notes
+
+1. Create a Compose application and point it to this repository.
+2. In Dokploy Domains tab, set Container Port to the same value as `PORT` (default `8080`).
+3. Configure environment variables in Dokploy Environment tab:
+	`PORT` and optionally `HOST_PORT`.
+4. Redeploy after domain changes.
+
+### GHCR image publishing
+
+The repository includes two workflows:
+
+- `.github/workflows/ghcr-main.yml`: pushes `ghcr.io/<owner>/<repo>:latest` on `main`.
+- `.github/workflows/ghcr-release.yml`: pushes semantic tags on `v*.*.*` (for example `1.2.3`, `1.2`, `1`).
+
+These workflows use `secrets.GITHUB_TOKEN` with `packages: write` permission.
+
 ## Roadmap
 
 We welcome contributions! Here are some planned improvements:
